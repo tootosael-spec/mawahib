@@ -120,20 +120,22 @@ const categorySelect = document.querySelector("#talent-category");
 const talentMessage = document.querySelector("#talent-message");
 const createTalentButton = document.querySelector("#create-talent-button");
 
-async function loadTalentCategories() {
-  if (!client || !categorySelect) return;
-  const { data, error } = await client
-    .from("talent_categories")
-    .select("id,name")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
-  if (error) {
-    categorySelect.innerHTML = '<option value="">تعذر تحميل المجالات</option>';
-    return;
-  }
+const talentCategoryOptions = [
+  ["arts", "الفنون والرسم"],
+  ["voice", "الأداء الصوتي والإنشاد"],
+  ["acting-content", "التمثيل وصناعة المحتوى"],
+  ["sports", "الرياضة والمهارات البدنية"],
+  ["photography", "التصوير"],
+  ["innovation", "الابتكار والاختراعات"],
+  ["cooking-crafts", "الطبخ والحرف"],
+  ["other", "مواهب أخرى"]
+];
+
+function loadTalentCategories() {
+  if (!categorySelect) return;
   categorySelect.innerHTML = '<option value="">اختر مجال الموهبة</option>' +
-    (data || []).map(item =>
-      `<option value="${item.id}">${escapeHtml(item.name)}</option>`
+    talentCategoryOptions.map(([slug, name]) =>
+      `<option value="${slug}">${escapeHtml(name)}</option>`
     ).join("");
 }
 
@@ -153,10 +155,19 @@ createTalentButton?.addEventListener("click", async () => {
   try {
     const { data: userData, error: userError } = await client.auth.getUser();
     if (userError || !userData.user) throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
+    const { data: category, error: categoryError } = await client
+      .from("talent_categories")
+      .select("id")
+      .eq("slug", categoryValue)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (categoryError) throw categoryError;
+    if (!category) throw new Error("هذا المجال غير متاح حالياً. اختر مجالاً آخر.");
+
     const { error } = await client.from("talents").insert({
       owner_id: userData.user.id,
       title,
-      category_id: Number(categoryValue),
+      category_id: category.id,
       description,
       status: "pending"
     });
