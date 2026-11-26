@@ -98,6 +98,13 @@ function showAccount(user) {
   document.querySelector("#account-heading").textContent =
     `أهلاً بك ${user.user_metadata?.display_name || ""} في مواهب`;
   document.querySelector("#account-email").textContent = user.email || "";
+  const verificationNote = document.querySelector("#account-state p");
+  const isEmailConfirmed = Boolean(user.email_confirmed_at || user.confirmed_at);
+  if (verificationNote) {
+    verificationNote.textContent = isEmailConfirmed
+      ? "تم تأكيد بريدك الإلكتروني بنجاح ✓ حسابك جاهز لاستخدام مواهب. سنضيف في المرحلة التالية صفحة إنشاء ملف موهبتك."
+      : "حسابك مسجل، لكن بريدك الإلكتروني لم يتأكد بعد. افتح رسالة التأكيد في بريدك الإلكتروني.";
+  }
 }
 
 async function refreshSession() {
