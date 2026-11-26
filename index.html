@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#142a27">
+  <meta name="description" content="مواهب — موهبتك تستحق أن تُشاهَد">
+  <title>مواهب | موهبتك تستحق أن تُشاهَد</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="مواهب"><span class="brand-mark">م</span><span>مواهب</span></a>
+    <nav><a href="#discover">اكتشف المواهب</a><a href="#about">عن المنصة</a></nav>
+    <a class="button button-outline" href="#join">اعرض موهبتك</a>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">مساحة لكل موهبة</span>
+        <h1>موهبتك تستحق<br><em>أن تُشاهَد.</em></h1>
+        <p>اكتشف مواهب ملهمة، وشارك العالم ما تتقنه. هنا تبدأ حكاية موهبتك.</p>
+        <div class="hero-actions"><a class="button" href="#join">ابدأ بعرض موهبتك</a><a class="text-link" href="#discover">تصفّح المواهب ←</a></div>
+        <div class="hero-note"><span class="pulse"></span> منصة لاكتشاف الإبداع ومشاركته</div>
+      </div>
+      <div class="hero-art" aria-label="رسوم فنية تجريدية"><div class="art-circle"></div><div class="art-card art-card-one">✦<small>إبداع</small></div><div class="art-card art-card-two">✳<small>شغف</small></div><div class="art-caption">كل موهبة<br>لها حكاية</div></div>
+    </section>
+    <section class="section" id="discover">
+      <div class="section-heading"><div><span class="eyebrow">من حولك</span><h2>اكتشف المواهب</h2><p>مساحة تتسع لمختلف الاهتمامات والمهارات.</p></div><label class="search"><span>⌕</span><input id="search" type="search" placeholder="ابحث عن موهبة أو مجال..." aria-label="ابحث عن موهبة"></label></div>
+      <div class="filters" id="filters"><button class="filter active" data-category="الكل">الكل</button><button class="filter" data-category="الفنون">الفنون</button><button class="filter" data-category="الأداء الصوتي">الأداء الصوتي</button><button class="filter" data-category="الرياضة">الرياضة</button><button class="filter" data-category="التصوير">التصوير</button><button class="filter" data-category="الابتكار">الابتكار</button><button class="filter" data-category="الحرف">الحرف</button></div>
+      <div class="talent-grid" id="talentGrid">
+        <article class="talent-card" data-category="الفنون" data-name="رسم وألوان"><div class="talent-art art-pink"><span>✿</span><small>الفنون</small></div><div class="talent-info"><div><h3>رسم وألوان</h3><p>لوحات من الخيال</p></div><span class="talent-icon">🎨</span></div></article>
+        <article class="talent-card" data-category="التصوير" data-name="عدسة وحكاية"><div class="talent-art art-blue"><span>◉</span><small>التصوير</small></div><div class="talent-info"><div><h3>عدسة وحكاية</h3><p>تفاصيل تستحق التوقف</p></div><span class="talent-icon">📷</span></div></article>
+        <article class="talent-card" data-category="الأداء الصوتي" data-name="صوت وإحساس"><div class="talent-art art-gold"><span>♫</span><small>الأداء الصوتي</small></div><div class="talent-info"><div><h3>صوت وإحساس</h3><p>مساحة للصوت الجميل</p></div><span class="talent-icon">🎙️</span></div></article>
+        <article class="talent-card" data-category="الابتكار" data-name="فكرة جديدة"><div class="talent-art art-green"><span>✧</span><small>الابتكار</small></div><div class="talent-info"><div><h3>فكرة جديدة</h3><p>حلول تبدأ بسؤال</p></div><span class="talent-icon">💡</span></div></article>
+      </div>
+      <p class="demo-note">هذه بطاقات تجريبية لتوضيح شكل المعرض، وليست ملفات مواهب حقيقية.</p>
+    </section>
+    <section class="join-section" id="join"><div><span class="eyebrow">حان وقت الظهور</span><h2>عندك موهبة؟<br>خلّ العالم يشوفها.</h2><p>قريباً ستتمكن من إنشاء ملف لموهبتك ومشاركة أعمالك من مكان واحد.</p></div><a class="button button-light" href="mailto:hello@mawahib.example?subject=مهتم%20بمنصة%20مواهب">سجّل اهتمامك</a></section>
+    <section class="about section" id="about"><span class="eyebrow">رؤيتنا</span><h2>كل شخص لديه شيء يستحق المشاركة.</h2><p>مواهب مساحة عربية تجمع أصحاب المهارات والإبداع، وتقرّب المواهب من الجمهور والفرص. نعمل على بناء تجربة تحترم الخصوصية وتضع سلامة المجتمع في المقدمة.</p></section>
+  </main>
+  <footer><a class="brand" href="#"><span class="brand-mark">م</span><span>مواهب</span></a><span>© <span id="year"></span> مواهب — موهبتك تستحق أن تُشاهَد</span></footer>
+  <script src="app.js"></script>
+</body>
+</html>
