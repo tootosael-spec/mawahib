@@ -109,7 +109,8 @@ async function refreshSession() {
   showAccount(data.session?.user || null);
 }
 
-document.querySelector("#signup-button").addEventListener("click", async () => {
+document.querySelector("#signup-button")?.addEventListener("click", async () => {
+  if (!client) return showMessage("تعذر الاتصال بخدمة الحسابات. تحقق من إعداد Supabase ثم أعد المحاولة.", true);
   const name = displayName.value.trim();
   const email = emailInput.value.trim();
   const password = passwordInput.value;
@@ -121,7 +122,7 @@ document.querySelector("#signup-button").addEventListener("click", async () => {
   const { data, error } = await client.auth.signUp({
     email,
     password,
-    options: { data: { display_name: name } }
+    options: { data: { display_name: name }, emailRedirectTo: window.location.origin }
   });
   if (error) return showMessage(error.message, true);
   if (data.session) {
@@ -132,7 +133,8 @@ document.querySelector("#signup-button").addEventListener("click", async () => {
   }
 });
 
-document.querySelector("#login-button").addEventListener("click", async () => {
+document.querySelector("#login-button")?.addEventListener("click", async () => {
+  if (!client) return showMessage("تعذر الاتصال بخدمة الحسابات. تحقق من إعداد Supabase ثم أعد المحاولة.", true);
   const email = emailInput.value.trim();
   const password = passwordInput.value;
   if (!email || !password) return showMessage("أدخل البريد الإلكتروني وكلمة المرور.", true);
@@ -143,7 +145,8 @@ document.querySelector("#login-button").addEventListener("click", async () => {
   showMessage("تم تسجيل الدخول بنجاح.");
 });
 
-document.querySelector("#logout-button").addEventListener("click", async () => {
+document.querySelector("#logout-button")?.addEventListener("click", async () => {
+  if (!client) return showMessage("تعذر الاتصال بخدمة الحسابات.", true);
   const { error } = await client.auth.signOut();
   if (error) return showMessage("تعذر تسجيل الخروج. حاول مرة أخرى.", true);
   showAccount(null);
