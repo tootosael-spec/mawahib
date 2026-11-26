@@ -98,11 +98,11 @@ function showAccount(user) {
   document.querySelector("#account-heading").textContent =
     `أهلاً بك ${user.user_metadata?.display_name || ""} في مواهب`;
   document.querySelector("#account-email").textContent = user.email || "";
-  const verificationNote = document.querySelector("#account-state p");
+  const verificationNote = document.querySelector("#email-status-note");
   const isEmailConfirmed = Boolean(user.email_confirmed_at || user.confirmed_at);
   if (verificationNote) {
     verificationNote.textContent = isEmailConfirmed
-      ? "تم تأكيد بريدك الإلكتروني بنجاح ✓ حسابك جاهز لاستخدام مواهب. سنضيف في المرحلة التالية صفحة إنشاء ملف موهبتك."
+      ? "تم تأكيد بريدك الإلكتروني بنجاح ✓ يمكنك الآن إنشاء ملف موهبتك."
       : "حسابك مسجل، لكن بريدك الإلكتروني لم يتأكد بعد. افتح رسالة التأكيد في بريدك الإلكتروني.";
   }
 }
@@ -115,6 +115,63 @@ async function refreshSession() {
   const { data } = await client.auth.getSession();
   showAccount(data.session?.user || null);
 }
+
+const categorySelect = document.querySelector("#talent-category");
+const talentMessage = document.querySelector("#talent-message");
+const createTalentButton = document.querySelector("#create-talent-button");
+
+async function loadTalentCategories() {
+  if (!client || !categorySelect) return;
+  const { data, error } = await client
+    .from("talent_categories")
+    .select("id,name")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  if (error) {
+    categorySelect.innerHTML = '<option value="">تعذر تحميل المجالات</option>';
+    return;
+  }
+  categorySelect.innerHTML = '<option value="">اختر مجال الموهبة</option>' +
+    (data || []).map(item =>
+      `<option value="${item.id}">${escapeHtml(item.name)}</option>`
+    ).join("");
+}
+
+createTalentButton?.addEventListener("click", async () => {
+  if (!client) return;
+  const title = document.querySelector("#talent-title").value.trim();
+  const categoryValue = categorySelect?.value || "";
+  const description = document.querySelector("#talent-description").value.trim();
+  if (!title || !categoryValue || !description) {
+    talentMessage.textContent = "أكمل اسم الموهبة والمجال والوصف قبل الحفظ.";
+    talentMessage.classList.add("error");
+    return;
+  }
+  createTalentButton.disabled = true;
+  talentMessage.classList.remove("error");
+  talentMessage.textContent = "جارٍ حفظ ملف موهبتك...";
+  try {
+    const { data: userData, error: userError } = await client.auth.getUser();
+    if (userError || !userData.user) throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
+    const { error } = await client.from("talents").insert({
+      owner_id: userData.user.id,
+      title,
+      category_id: Number(categoryValue),
+      description,
+      status: "pending"
+    });
+    if (error) throw error;
+    document.querySelector("#talent-title").value = "";
+    document.querySelector("#talent-description").value = "";
+    categorySelect.value = "";
+    talentMessage.textContent = "تم حفظ ملف موهبتك وإرساله للمراجعة. سيظهر في المعرض بعد اعتماده.";
+  } catch (error) {
+    talentMessage.textContent = error.message || "تعذر حفظ الملف. حاول مرة أخرى.";
+    talentMessage.classList.add("error");
+  } finally {
+    createTalentButton.disabled = false;
+  }
+});
 
 document.querySelector("#signup-button")?.addEventListener("click", async () => {
   if (!client) return showMessage("تعذر الاتصال بخدمة الحسابات. تحقق من إعداد Supabase ثم أعد المحاولة.", true);
@@ -162,4 +219,5 @@ document.querySelector("#logout-button")?.addEventListener("click", async () => 
 
 client?.auth.onAuthStateChange((_event, session) => showAccount(session?.user || null));
 loadPublishedTalents();
+loadTalentCategories();
 refreshSession();
