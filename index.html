@@ -62,7 +62,19 @@
         <div id="account-state" hidden>
           <h3 id="account-heading">أهلاً بك في مواهب</h3>
           <p id="account-email"></p>
-          <p>تم تسجيل دخولك. سنضيف في المرحلة التالية صفحة إنشاء ملف موهبتك.</p>
+          <p id="email-status-note">تم تسجيل دخولك. يمكنك الآن إنشاء ملف موهبتك.</p>
+          <div class="talent-form-wrap" id="talent-form-wrap">
+            <h4>أنشئ ملف موهبتك</h4>
+            <p class="form-hint">اكتب نبذة عن موهبتك. سيظهر الملف بعد مراجعته واعتماده.</p>
+            <label for="talent-title">اسم الموهبة</label>
+            <input id="talent-title" type="text" maxlength="100" placeholder="مثال: الرسم بالألوان">
+            <label for="talent-category">مجال الموهبة</label>
+            <select id="talent-category"><option value="">جارٍ تحميل المجالات...</option></select>
+            <label for="talent-description">وصف الموهبة</label>
+            <textarea id="talent-description" rows="4" maxlength="1000" placeholder="عرّف الزوار بموهبتك وما تحب تقديمه..."></textarea>
+            <button class="button" id="create-talent-button" type="button">حفظ ملف الموهبة</button>
+            <p class="auth-message" id="talent-message" role="status" aria-live="polite"></p>
+          </div>
           <button class="button button-outline" id="logout-button" type="button">تسجيل الخروج</button>
         </div>
       </div>
