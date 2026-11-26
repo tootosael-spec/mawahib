@@ -36,6 +36,37 @@
       </div>
       <p class="demo-note">هذه بطاقات تجريبية لتوضيح شكل المعرض، وليست ملفات مواهب حقيقية.</p>
     </section>
+
+    <section class="auth-section" id="account">
+      <div class="auth-intro">
+        <span class="eyebrow">مساحتك في مواهب</span>
+        <h2>ابدأ رحلتك وعرّفنا بموهبتك.</h2>
+        <p>أنشئ حساباً لتتمكن لاحقاً من بناء ملفك ومشاركة أعمالك. استخدم بريدك الإلكتروني وكلمة مرور لا تقل عن ٨ أحرف.</p>
+        <p class="privacy-note">لا تشارك كلمة المرور مع أي شخص. ولا ترفع صوراً أو معلومات خاصة قبل اكتمال إعدادات الخصوصية والحماية.</p>
+      </div>
+      <div class="auth-card">
+        <div id="auth-form-wrap">
+          <h3>إنشاء حساب أو تسجيل الدخول</h3>
+          <label for="display-name">الاسم</label>
+          <input id="display-name" type="text" autocomplete="name" placeholder="اسمك">
+          <label for="auth-email">البريد الإلكتروني</label>
+          <input id="auth-email" type="email" autocomplete="email" inputmode="email" placeholder="name@example.com">
+          <label for="auth-password">كلمة المرور</label>
+          <input id="auth-password" type="password" autocomplete="new-password" placeholder="٨ أحرف على الأقل">
+          <div class="auth-actions">
+            <button class="button" id="signup-button" type="button">إنشاء حساب</button>
+            <button class="button button-outline" id="login-button" type="button">تسجيل الدخول</button>
+          </div>
+          <p class="auth-message" id="auth-message" role="status" aria-live="polite"></p>
+        </div>
+        <div id="account-state" hidden>
+          <h3 id="account-heading">أهلاً بك في مواهب</h3>
+          <p id="account-email"></p>
+          <p>تم تسجيل دخولك. سنضيف في المرحلة التالية صفحة إنشاء ملف موهبتك.</p>
+          <button class="button button-outline" id="logout-button" type="button">تسجيل الخروج</button>
+        </div>
+      </div>
+    </section>
     <section class="join-section" id="join"><div><span class="eyebrow">حان وقت الظهور</span><h2>عندك موهبة؟<br>خلّ العالم يشوفها.</h2><p>قريباً ستتمكن من إنشاء ملف لموهبتك ومشاركة أعمالك من مكان واحد.</p></div><a class="button button-light" href="mailto:hello@mawahib.example?subject=مهتم%20بمنصة%20مواهب">سجّل اهتمامك</a></section>
     <section class="about section" id="about"><span class="eyebrow">رؤيتنا</span><h2>كل شخص لديه شيء يستحق المشاركة.</h2><p>مواهب مساحة عربية تجمع أصحاب المهارات والإبداع، وتقرّب المواهب من الجمهور والفرص. نعمل على بناء تجربة تحترم الخصوصية وتضع سلامة المجتمع في المقدمة.</p></section>
   </main>
