@@ -456,3 +456,63 @@ body.comments-modal-open{overflow:hidden}
   min-height:44px;
   padding:10px 12px;
 }
+
+
+/* شريط أفقي لأعمال الموهبة داخل البطاقة */
+.talent-media-strip{
+  display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;
+  padding:12px 14px 14px;direction:rtl;
+  scroll-snap-type:x proximity;overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;touch-action:pan-x;
+  scrollbar-width:thin;
+}
+.talent-media-item{
+  flex:0 0 190px;min-width:0;max-width:190px;
+  margin:0;display:flex;flex-direction:column;gap:7px;
+  padding:8px;border:1px solid var(--line);border-radius:12px;
+  background:#fff;color:var(--ink);text-decoration:none;
+  scroll-snap-align:start;overflow:hidden;
+}
+.talent-media-item img{
+  display:block;width:100%;height:132px;object-fit:cover;border-radius:8px;
+}
+.talent-media-caption{
+  margin:0;color:var(--muted);font-size:11px;line-height:1.6;
+  white-space:normal;overflow-wrap:anywhere;
+}
+.talent-video-item{justify-content:center;align-items:center;min-height:176px;background:#f3f7f1;text-align:center}
+.talent-video-play{
+  display:grid;place-items:center;width:48px;height:48px;
+  border-radius:50%;background:var(--green);color:#fff;font-size:18px;
+}
+.talent-video-item strong{font-size:12px}
+.talent-media-strip::-webkit-scrollbar{height:5px}
+.talent-media-strip::-webkit-scrollbar-thumb{background:#cbd8c8;border-radius:9px}
+
+/* رأس ثابت خارج محتوى شريحة التفاصيل */
+.talent-detail-panel{padding:0 28px 28px}
+.talent-detail-toolbar{
+  position:sticky;top:0;z-index:5;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin:0 -28px 18px;padding:12px 18px;
+  background:#fff;border-bottom:1px solid var(--line);
+  border-radius:16px 16px 0 0;
+}
+.talent-detail-toolbar .detail-close,
+.talent-detail-toolbar .detail-contact-trigger{
+  position:static;display:inline-flex;align-items:center;justify-content:center;
+  min-height:40px;margin:0;border:0;border-radius:10px;
+}
+.talent-detail-toolbar .detail-close{
+  order:2;width:40px;height:40px;padding:0;background:#f0f2ed;font-size:25px;
+}
+.talent-detail-toolbar .detail-contact-trigger{
+  order:1;padding:9px 16px;background:var(--green);color:#fff;
+}
+@media(max-width:600px){
+  .talent-media-strip{padding:10px 12px 12px;gap:8px}
+  .talent-media-item{flex-basis:165px;max-width:165px}
+  .talent-media-item img{height:118px}
+  .talent-detail-panel{padding:0 16px 20px}
+  .talent-detail-toolbar{margin:0 -16px 15px;padding:10px 14px}
+}
