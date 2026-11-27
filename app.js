@@ -53,10 +53,13 @@ function renderTalents(rows) {
           : `<a class="talent-media-item talent-video-item" href="${escapeHtml(media.file_url)}" target="_blank" rel="noopener noreferrer"><span class="talent-video-play">▶</span><strong>مشاهدة الفيديو ${mediaIndex + 1}</strong>${caption}</a>`;
       }).join("")}
     </div>` : "";
-    return `<article class="talent-card" data-talent-id="${escapeHtml(talent.id)}" data-category="${escapeHtml(shortCategory)}" data-name="${escapeHtml(talent.title)}" tabindex="0" role="button" aria-label="عرض موهبة ${escapeHtml(talent.title)}">
+    const contactButton = !talent.isDemo && talent.owner_id ? `<button class="talent-card-contact" type="button" data-contact-talent="${escapeHtml(talent.id)}">تواصل معي</button>` : "";
+    return `<article class="talent-card" data-talent-id="${escapeHtml(talent.id)}" data-category="${escapeHtml(shortCategory)}" data-name="${escapeHtml(talent.title)}">
+      <div class="talent-card-toolbar">${contactButton}</div>
       <div class="talent-art ${palettes[index % palettes.length]}">${artwork}${sampleLabel}</div>
       ${mediaStrip}
       <div class="talent-info"><div><h3>${escapeHtml(talent.title)}</h3><p>${escapeHtml(talent.description || "موهبة تستحق المشاهدة")}</p></div><span class="talent-icon">✦</span></div>
+      <div class="talent-contact-inline" hidden></div>
       <div class="talent-community-inline" aria-label="التفاعل والتعليقات"></div>
     </article>`;
   }).join("");
@@ -277,8 +280,13 @@ function showTalentDetail(talentId) {
     });
   }
   renderTalentCommunity(talent);
-  talentDetail.hidden = false;
-  document.body.classList.add("detail-open");
+  const card = grid?.querySelector(`.talent-card[data-talent-id="${CSS.escape(talentId)}"]`);
+  const contactSlot = card?.querySelector(".talent-contact-inline");
+  if (contactSlot && detailContact) {
+    contactSlot.replaceChildren(detailContact);
+    contactSlot.hidden = false;
+    contactSlot.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
 }
 
 
@@ -559,20 +567,19 @@ function closeTalentDetail() {
 }
 
 grid?.addEventListener("click", event => {
-  const card = event.target.closest(".talent-card");
-  if (!card) return;
-  if (event.target.closest(".talent-community-inline, .talent-media-strip")) return;
-  showTalentDetail(card.dataset.talentId);
-});
-grid?.addEventListener("keydown", event => {
-  if (event.key !== "Enter" && event.key !== " ") return;
-  if (event.target.closest(".talent-community-inline, .talent-media-strip")) return;
-  const card = event.target.closest(".talent-card");
-  if (card) {
-    event.preventDefault();
-    showTalentDetail(card.dataset.talentId);
+  const contactButton = event.target.closest("[data-contact-talent]");
+  if (!contactButton) return;
+  const talentId = contactButton.dataset.contactTalent;
+  const card = contactButton.closest(".talent-card");
+  const slot = card?.querySelector(".talent-contact-inline");
+  if (slot && !slot.hidden) {
+    slot.hidden = true;
+    slot.replaceChildren();
+    return;
   }
+  showTalentDetail(talentId);
 });
+
 talentDetail?.querySelectorAll("[data-close-detail]").forEach(button =>
   button.addEventListener("click", closeTalentDetail)
 );
