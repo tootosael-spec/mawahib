@@ -366,9 +366,37 @@ async function renderTalentCommunity(talent, target = detailCommunity, inline = 
   };
   likeButton.addEventListener("click", () => setReaction("like"));
   dislikeButton.addEventListener("click", () => setReaction("dislike"));
+  const commentsModal = document.createElement("div");
+  commentsModal.className = "community-comments-modal";
+  commentsModal.setAttribute("role", "dialog");
+  commentsModal.setAttribute("aria-modal", "true");
+  commentsModal.setAttribute("aria-label", "تعليقات الموهبة");
+  const commentsBackdrop = document.createElement("button");
+  commentsBackdrop.type = "button";
+  commentsBackdrop.className = "community-comments-backdrop";
+  commentsBackdrop.setAttribute("aria-label", "إغلاق التعليقات");
+  const commentsDialog = document.createElement("div");
+  commentsDialog.className = "community-comments-dialog";
+  const commentsModalHeader = document.createElement("div");
+  commentsModalHeader.className = "community-comments-modal-header";
+  const commentsModalTitle = document.createElement("strong");
+  commentsModalTitle.textContent = "آراء المجتمع";
+  const commentsClose = document.createElement("button");
+  commentsClose.type = "button";
+  commentsClose.className = "community-comments-close";
+  commentsClose.setAttribute("aria-label", "إغلاق");
+  commentsClose.textContent = "×";
+  commentsModalHeader.append(commentsModalTitle, commentsClose);
   const commentsPanel = document.createElement("div");
   commentsPanel.className = "community-comments-panel";
-  commentsPanel.hidden = inline;
+  const closeCommentsModal = () => {
+    commentsModal.remove();
+    document.body.classList.remove("comments-modal-open");
+  };
+  commentsClose.addEventListener("click", closeCommentsModal);
+  commentsBackdrop.addEventListener("click", closeCommentsModal);
+  commentsDialog.append(commentsModalHeader, commentsPanel);
+  commentsModal.append(commentsBackdrop, commentsDialog);
   const commentsToggle = document.createElement("button");
   commentsToggle.type = "button";
   commentsToggle.className = "comments-toggle";
@@ -379,9 +407,11 @@ async function renderTalentCommunity(talent, target = detailCommunity, inline = 
   commentsToggle.append("💬 التعليقات ", commentsCount);
   commentsToggle.addEventListener("click", event => {
     event.stopPropagation();
-    commentsPanel.hidden = !commentsPanel.hidden;
-    commentsToggle.firstChild.textContent = commentsPanel.hidden ? "💬 التعليقات " : "إخفاء التعليقات ";
-    if (!commentsPanel.hidden) commentsPanel.scrollIntoView({behavior:"smooth",block:"nearest"});
+    if (!document.body.contains(commentsModal)) {
+      document.body.appendChild(commentsModal);
+      document.body.classList.add("comments-modal-open");
+      commentsClose.focus();
+    }
   });
   const commentsHeading = document.createElement("h3");
   commentsHeading.textContent = "آراء المجتمع";
@@ -483,7 +513,7 @@ async function renderTalentCommunity(talent, target = detailCommunity, inline = 
     }
   });
   commentsPanel.append(commentsHeading, commentsList, commentInput, commentButton, commentStatus);
-  section.append(reactionHeading, reactionRow, status, commentsToggle, commentsPanel);
+  section.append(reactionHeading, reactionRow, status, commentsToggle);
   target.appendChild(section);
 
   try {
@@ -520,7 +550,11 @@ talentDetail?.querySelectorAll("[data-close-detail]").forEach(button =>
   button.addEventListener("click", closeTalentDetail)
 );
 document.addEventListener("keydown", event => {
-  if (event.key === "Escape") closeTalentDetail();
+  if (event.key === "Escape") {
+    document.querySelectorAll(".community-comments-modal").forEach(modal => modal.remove());
+    document.body.classList.remove("comments-modal-open");
+    closeTalentDetail();
+  }
 });
 
 const message = document.querySelector("#auth-message");
