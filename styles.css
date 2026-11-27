@@ -448,3 +448,11 @@ body.comments-modal-open{overflow:hidden}
   -webkit-user-select:text;
   user-select:text;
 }
+
+
+/* أزرار التفاعل بشكل مستطيل مقوس */
+.talent-community-inline .reaction-button{
+  border-radius:10px;
+  min-height:44px;
+  padding:10px 12px;
+}
