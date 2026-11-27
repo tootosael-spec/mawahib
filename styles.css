@@ -646,3 +646,20 @@ body.comments-modal-open{overflow:hidden}
   .talent-card-contact{min-height:42px;padding:8px 16px;font-size:12px}
   .talent-info{padding:18px 19px}
 }
+
+
+/* زر التواصل مستقل تماماً عن أزرار الإعجاب */
+.talent-card-contact::before{content:none!important;display:none!important}
+.talent-card-contact{
+  background:var(--green);
+  color:#fff;
+  border:1px solid var(--green);
+  border-radius:11px;
+  box-shadow:none;
+  font-weight:700;
+}
+.talent-card-contact:hover{
+  background:var(--ink);
+  border-color:var(--ink);
+  color:#fff;
+}
