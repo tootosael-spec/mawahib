@@ -21,9 +21,17 @@ function escapeHtml(value = "") {
   })[char]);
 }
 
+const sampleTalents = [
+  { id: "sample-design", title: "مصمم هوية بصرية", description: "تصميم شعارات وهويات بصرية للمشاريع الصغيرة.", sampleServices: "تصميم شعار • هوية بصرية • منشورات تسويقية", talent_categories: { name: "الفنون والرسم" }, isDemo: true },
+  { id: "sample-photo", title: "مصور منتجات", description: "تصوير احترافي للمنتجات والمتاجر الإلكترونية.", sampleServices: "تصوير منتجات • صور إعلانية • تنسيق جلسات تصوير", talent_categories: { name: "التصوير" }, isDemo: true },
+  { id: "sample-voice", title: "معلّق صوتي", description: "تقديم تسجيلات صوتية للإعلانات والمقاطع التعريفية.", sampleServices: "تعليق إعلاني • مقدمة فيديو • تسجيل نصوص", talent_categories: { name: "الأداء الصوتي والإنشاد" }, isDemo: true },
+  { id: "sample-crafts", title: "صانع أعمال يدوية", description: "ابتكار هدايا وقطع يدوية بتفاصيل مميزة.", sampleServices: "هدايا مخصصة • تغليف إبداعي • قطع ديكور", talent_categories: { name: "الطبخ والحرف" }, isDemo: true }
+];
+
 function renderTalents(rows) {
   if (!grid) return;
-  grid.innerHTML = (rows || []).map((talent, index) => {
+  const displayRows = [...(rows || []), ...sampleTalents];
+  grid.innerHTML = displayRows.map((talent, index) => {
     const category = talent.talent_categories?.name || "مواهب أخرى";
     const shortCategory = categoryAliases[category] || category;
     const palettes = ["art-pink", "art-blue", "art-gold", "art-green"];
@@ -31,12 +39,13 @@ function renderTalents(rows) {
     const artwork = talent.cover_url
       ? `<img src="${escapeHtml(talent.cover_url)}" alt="" loading="lazy">`
       : `<span>${symbols[index % symbols.length]}</span><small>${escapeHtml(category)}</small>`;
+    const sampleLabel = talent.isDemo ? '<span class="sample-label">نموذج تجريبي</span>' : "";
     return `<article class="talent-card" data-talent-id="${escapeHtml(talent.id)}" data-category="${escapeHtml(shortCategory)}" data-name="${escapeHtml(talent.title)}" tabindex="0" role="button" aria-label="عرض موهبة ${escapeHtml(talent.title)}">
-      <div class="talent-art ${palettes[index % palettes.length]}">${artwork}</div>
+      <div class="talent-art ${palettes[index % palettes.length]}">${artwork}${sampleLabel}</div>
       <div class="talent-info"><div><h3>${escapeHtml(talent.title)}</h3><p>${escapeHtml(talent.description || "موهبة تستحق المشاهدة")}</p></div><span class="talent-icon">✦</span></div>
     </article>`;
   }).join("");
-  if (demoNote) demoNote.hidden = true;
+  if (demoNote) demoNote.hidden = false;
   applyFilters();
 }
 
@@ -105,11 +114,17 @@ const detailVideos = document.querySelector("#detail-videos");
 let publishedTalentRows = [];
 
 function showTalentDetail(talentId) {
-  const talent = publishedTalentRows.find(item => item.id === talentId);
+  const talent = [...publishedTalentRows, ...sampleTalents].find(item => item.id === talentId);
   if (!talent || !talentDetail) return;
   detailTitle.textContent = talent.title;
   detailDescription.textContent = talent.description || "موهبة تستحق المشاهدة.";
   detailVideos.replaceChildren();
+  if (talent.isDemo) {
+    const sample = document.createElement("p");
+    sample.className = "detail-empty";
+    sample.textContent = "خدمات نموذجية: " + talent.sampleServices + ". هذا الملف تجريبي للتوضيح فقط، وليس حساباً لشخص حقيقي.";
+    detailVideos.appendChild(sample);
+  }
   const links = (talent.approvedVideos || []).filter(value => {
     try {
       const url = new URL(value);
@@ -120,7 +135,7 @@ function showTalentDetail(talentId) {
       ].includes(host);
     } catch { return false; }
   });
-  if (!links.length) {
+  if (!links.length && !talent.isDemo) {
     const note = document.createElement("p");
     note.className = "detail-empty";
     note.textContent = "لا توجد فيديوهات معتمدة لهذه الموهبة حتى الآن.";
