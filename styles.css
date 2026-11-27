@@ -95,3 +95,10 @@ body.detail-open{overflow:hidden}
 .community-report{margin-top:22px;padding-top:14px;border-top:1px dashed var(--line)}
 .report-toggle{border:0;background:transparent;color:#9a4c42;font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:6px 0}
 .community-report textarea,.community-report select{display:block;width:100%;margin:9px 0;padding:10px;border:1px solid var(--line);border-radius:9px;font:inherit}
+
+/* أزرار التفاعل أسفل كل شريحة موهبة */
+.talent-card-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:0 10px 12px}
+.talent-card-actions button{min-width:0;border:1px solid var(--line);border-radius:8px;background:#f8faf6;color:var(--ink);padding:8px 3px;font:inherit;font-size:11px;cursor:pointer;white-space:nowrap}
+.talent-card-actions button:hover,.talent-card-actions button:focus-visible{border-color:var(--green);background:#e7efdf;outline:none}
+.talent-card-actions button span{font-size:10px}
+@media(max-width:380px){.talent-card-actions{gap:3px;padding-left:6px;padding-right:6px}.talent-card-actions button{font-size:10px;padding:7px 1px}.talent-card-actions button span{font-size:9px}}
