@@ -566,18 +566,49 @@ function closeTalentDetail() {
   document.body.classList.remove("detail-open");
 }
 
-grid?.addEventListener("click", event => {
-  const contactButton = event.target.closest("[data-contact-talent]");
-  if (!contactButton) return;
-  const talentId = contactButton.dataset.contactTalent;
-  const card = contactButton.closest(".talent-card");
-  const slot = card?.querySelector(".talent-contact-inline");
-  if (slot && !slot.hidden) {
-    slot.hidden = true;
-    slot.replaceChildren();
+async function startTalentConversation(talentId) {
+  if (!client) return;
+  const { data: userData, error: userError } = await client.auth.getUser();
+  if (userError) throw userError;
+  if (!userData.user) {
+    window.location.href = `account.html?contactTalent=${encodeURIComponent(talentId)}#account`;
     return;
   }
-  showTalentDetail(talentId);
+  const { data: talent, error: talentError } = await client
+    .from("talents").select("id,owner_id,title").eq("id", talentId).eq("status", "published").single();
+  if (talentError) throw talentError;
+  if (talent.owner_id === userData.user.id) throw new Error("هذا ملف موهبتك.");
+  let { data: conversation, error: conversationError } = await client
+    .from("talent_conversations").select("id")
+    .eq("talent_id", talent.id).eq("client_id", userData.user.id)
+    .eq("talent_owner_id", talent.owner_id).eq("status", "open")
+    .limit(1).maybeSingle();
+  if (conversationError) throw conversationError;
+  if (!conversation) {
+    const created = await client.from("talent_conversations").insert({
+      talent_id: talent.id, client_id: userData.user.id, talent_owner_id: talent.owner_id
+    }).select("id").single();
+    if (created.error) throw created.error;
+    conversation = created.data;
+  }
+  window.location.href = `account.html?conversation=${encodeURIComponent(conversation.id)}#messages-wrap`;
+}
+
+grid?.addEventListener("click", async event => {
+  const contactButton = event.target.closest("[data-contact-talent]");
+  if (!contactButton) return;
+  event.preventDefault();
+  const talentId = contactButton.dataset.contactTalent;
+  contactButton.disabled = true;
+  const originalText = contactButton.textContent;
+  contactButton.textContent = "جارٍ فتح المحادثة...";
+  try {
+    await startTalentConversation(talentId);
+  } catch (error) {
+    alert(error.message || "تعذر فتح المحادثة. حاول مرة أخرى.");
+    contactButton.disabled = false;
+    contactButton.textContent = originalText;
+  }
 });
 
 talentDetail?.querySelectorAll("[data-close-detail]").forEach(button =>
@@ -615,6 +646,7 @@ function showAccount(user) {
   accountState.hidden = false;
   loadOwnedTalents();
   loadConversations();
+  handlePendingTalentConversation(user);
   document.querySelector("#account-heading").textContent =
     `أهلاً بك ${user.user_metadata?.display_name || ""} في مواهب`;
   document.querySelector("#account-email").textContent = user.email || "";
@@ -991,6 +1023,51 @@ const conversationHeading = document.querySelector("#conversation-heading");
 const replyInput = document.querySelector("#reply-message");
 const replyButton = document.querySelector("#send-reply-button");
 const replyStatus = document.querySelector("#reply-message-status");
+
+let pendingTalentConversationHandled = false;
+
+async function handlePendingTalentConversation(user) {
+  if (!user || pendingTalentConversationHandled || !conversationsList) return;
+  const params = new URLSearchParams(window.location.search);
+  const requestedTalentId = params.get("contactTalent");
+  const requestedConversationId = params.get("conversation");
+  if (!requestedTalentId && !requestedConversationId) return;
+  pendingTalentConversationHandled = true;
+  try {
+    let conversationId = requestedConversationId;
+    if (requestedTalentId) {
+      const { data: talent, error: talentError } = await client
+        .from("talents").select("id,owner_id").eq("id", requestedTalentId)
+        .eq("status", "published").single();
+      if (talentError) throw talentError;
+      if (talent.owner_id === user.id) throw new Error("هذا ملف موهبتك.");
+      let { data: conversation, error } = await client
+        .from("talent_conversations").select("id")
+        .eq("talent_id", talent.id).eq("client_id", user.id)
+        .eq("talent_owner_id", talent.owner_id).eq("status", "open")
+        .limit(1).maybeSingle();
+      if (error) throw error;
+      if (!conversation) {
+        const created = await client.from("talent_conversations").insert({
+          talent_id: talent.id, client_id: user.id, talent_owner_id: talent.owner_id
+        }).select("id").single();
+        if (created.error) throw created.error;
+        conversation = created.data;
+      }
+      conversationId = conversation.id;
+    }
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("contactTalent");
+    if (conversationId) cleanUrl.searchParams.set("conversation", conversationId);
+    window.history.replaceState({}, "", cleanUrl);
+    await loadConversations();
+    if (conversationId) await openConversation(conversationId);
+    document.querySelector("#messages-wrap")?.scrollIntoView({behavior:"smooth",block:"start"});
+  } catch (error) {
+    pendingTalentConversationHandled = false;
+    if (conversationsList) conversationsList.textContent = error.message || "تعذر فتح المحادثة.";
+  }
+}
 
 async function loadConversations() {
   if (!client || !conversationsList) return;
