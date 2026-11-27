@@ -246,17 +246,28 @@ function showTalentDetail(talentId) {
 }
 
 
+function getCommunityVisitorId() {
+  const key = "mawahib_community_visitor";
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
 async function renderTalentCommunity(talent) {
   if (!detailCommunity) return;
   detailCommunity.replaceChildren();
   if (talent.isDemo || !client) {
     const note = document.createElement("p");
     note.className = "detail-empty";
-    note.textContent = "التفاعل والتعليقات والبلاغات متاحة على ملفات المواهب الحقيقية فقط.";
+    note.textContent = "التفاعل والتعليقات متاحة على ملفات المواهب المنشورة فقط.";
     detailCommunity.appendChild(note);
     return;
   }
 
+  const visitorId = getCommunityVisitorId();
   const section = document.createElement("section");
   section.className = "community-section";
   const reactionHeading = document.createElement("h3");
@@ -272,65 +283,44 @@ async function renderTalentCommunity(talent) {
   likeButton.append("👍 إعجاب ", likeCount);
   dislikeButton.append("👎 عدم إعجاب ", dislikeCount);
   reactionRow.append(likeButton, dislikeButton);
-
   const status = document.createElement("p");
   status.className = "auth-message";
+
   const refreshReactions = async () => {
     const [likes, dislikes] = await Promise.all([
-      client.from("talent_likes").select("user_id", { count: "exact", head: true }).eq("talent_id", talent.id),
-      client.from("talent_dislikes").select("user_id", { count: "exact", head: true }).eq("talent_id", talent.id)
+      client.from("talent_likes").select("id", { count: "exact", head: true }).eq("talent_id", talent.id),
+      client.from("talent_dislikes").select("id", { count: "exact", head: true }).eq("talent_id", talent.id)
     ]);
     if (likes.error || dislikes.error) throw likes.error || dislikes.error;
     likeCount.textContent = String(likes.count || 0);
     dislikeCount.textContent = String(dislikes.count || 0);
   };
-  const refreshMyReaction = async () => {
-    const { data } = await client.auth.getUser();
-    const user = data.user;
-    likeButton.classList.remove("selected");
-    dislikeButton.classList.remove("selected");
-    if (!user) return;
-    const [like, dislike] = await Promise.all([
-      client.from("talent_likes").select("user_id").eq("talent_id", talent.id).eq("user_id", user.id).maybeSingle(),
-      client.from("talent_dislikes").select("user_id").eq("talent_id", talent.id).eq("user_id", user.id).maybeSingle()
-    ]);
-    if (like.data) likeButton.classList.add("selected");
-    if (dislike.data) dislikeButton.classList.add("selected");
-  };
+
   const setReaction = async (kind) => {
-    likeButton.disabled = dislikeButton.disabled = true;
+    const button = kind === "like" ? likeButton : dislikeButton;
+    button.disabled = true;
     try {
-      const { data, error } = await client.auth.getUser();
-      if (error || !data.user) {
-        status.textContent = "سجّل الدخول أولاً للتفاعل مع المواهب.";
-        return;
-      }
-      const userId = data.user.id;
-      const ownTable = kind === "like" ? "talent_likes" : "talent_dislikes";
-      const otherTable = kind === "like" ? "talent_dislikes" : "talent_likes";
-      const { data: existing, error: readError } = await client.from(ownTable)
-        .select("user_id").eq("talent_id", talent.id).eq("user_id", userId).maybeSingle();
-      if (readError) throw readError;
-      if (existing) {
-        const { error: removeError } = await client.from(ownTable)
-          .delete().eq("talent_id", talent.id).eq("user_id", userId);
-        if (removeError) throw removeError;
+      const table = kind === "like" ? "talent_likes" : "talent_dislikes";
+      const { error } = await client.from(table).insert({
+        talent_id: talent.id,
+        visitor_id: visitorId,
+        user_id: null
+      });
+      if (error && error.code === "23505") {
+        status.textContent = "سبق وسجلت هذا التفاعل من هذا الجهاز.";
+      } else if (error) {
+        throw error;
       } else {
-        const { error: clearError } = await client.from(otherTable)
-          .delete().eq("talent_id", talent.id).eq("user_id", userId);
-        if (clearError) throw clearError;
-        const { error: addError } = await client.from(ownTable)
-          .insert({ talent_id: talent.id, user_id: userId });
-        if (addError) throw addError;
+        status.classList.remove("error");
+        status.textContent = "شكراً لمشاركتك رأيك.";
+        button.classList.add("selected");
       }
-      status.textContent = "";
       await refreshReactions();
-      await refreshMyReaction();
     } catch (error) {
       status.textContent = error.message || "تعذر تسجيل تفاعلك.";
       status.classList.add("error");
     } finally {
-      likeButton.disabled = dislikeButton.disabled = false;
+      button.disabled = false;
     }
   };
   likeButton.addEventListener("click", () => setReaction("like"));
@@ -344,14 +334,14 @@ async function renderTalentCommunity(talent) {
   const loadComments = async () => {
     commentsList.replaceChildren();
     const { data, error } = await client.from("talent_comments")
-      .select("id,body,created_at,profiles(display_name)")
+      .select("id,body,created_at")
       .eq("talent_id", talent.id).eq("status", "published")
       .order("created_at", { ascending: false }).limit(50);
     if (error) throw error;
     if (!data?.length) {
       const empty = document.createElement("p");
       empty.className = "detail-empty";
-      empty.textContent = "لا توجد تعليقات منشورة حتى الآن.";
+      empty.textContent = "لا توجد تعليقات حتى الآن. كن أول من يعلّق.";
       commentsList.appendChild(empty);
       return;
     }
@@ -359,15 +349,38 @@ async function renderTalentCommunity(talent) {
       const item = document.createElement("article");
       item.className = "community-comment";
       const author = document.createElement("strong");
-      author.textContent = comment.profiles?.display_name || "زائر";
+      author.textContent = "زائر";
       const body = document.createElement("p");
       body.textContent = comment.body;
       const date = document.createElement("small");
       date.textContent = new Date(comment.created_at).toLocaleDateString("ar-SA");
-      item.append(author, body, date);
+      const report = document.createElement("button");
+      report.type = "button";
+      report.className = "report-toggle comment-report";
+      report.textContent = "⚑ إبلاغ عن التعليق";
+      const reportStatus = document.createElement("small");
+      report.addEventListener("click", async () => {
+        if (report.disabled) return;
+        report.disabled = true;
+        try {
+          const { error: reportError } = await client.from("talent_reports").insert({
+            comment_id: comment.id,
+            reporter_id: null,
+            reason: "تعليق مشبوه أو مسيء",
+            details: ""
+          });
+          if (reportError) throw reportError;
+          reportStatus.textContent = "تم استلام البلاغ، شكراً لك.";
+        } catch (error) {
+          report.disabled = false;
+          reportStatus.textContent = error.message || "تعذر إرسال البلاغ.";
+        }
+      });
+      item.append(author, body, date, report, reportStatus);
       commentsList.appendChild(item);
     });
   };
+
   const commentInput = document.createElement("textarea");
   commentInput.rows = 3;
   commentInput.maxLength = 1000;
@@ -381,22 +394,30 @@ async function renderTalentCommunity(talent) {
   commentStatus.className = "auth-message";
   commentButton.addEventListener("click", async () => {
     const body = commentInput.value.trim();
-    if (body.length < 1) {
+    if (!body) {
       commentStatus.textContent = "اكتب تعليقك أولاً.";
       commentStatus.classList.add("error");
       return;
     }
     commentButton.disabled = true;
     try {
-      const { data, error: authError } = await client.auth.getUser();
-      if (authError || !data.user) throw new Error("سجّل الدخول لإضافة تعليق.");
       const { error } = await client.from("talent_comments").insert({
-        talent_id: talent.id, user_id: data.user.id, body, status: "pending"
+        talent_id: talent.id,
+        user_id: null,
+        visitor_id: visitorId,
+        body,
+        status: "published"
       });
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes("COMMENT_BLOCKED")) {
+          throw new Error("تم حذف التعليق تلقائياً لأنه يحتوي على كلمات جنسية أو مؤذية.");
+        }
+        throw error;
+      }
       commentInput.value = "";
       commentStatus.classList.remove("error");
-      commentStatus.textContent = "وصل تعليقك، وسيظهر بعد المراجعة.";
+      commentStatus.textContent = "تم نشر تعليقك.";
+      await loadComments();
     } catch (error) {
       commentStatus.textContent = error.message || "تعذر إرسال التعليق.";
       commentStatus.classList.add("error");
@@ -405,64 +426,10 @@ async function renderTalentCommunity(talent) {
     }
   });
   section.append(commentsHeading, commentsList, commentInput, commentButton, commentStatus);
-
-  const reportWrap = document.createElement("div");
-  reportWrap.className = "community-report";
-  const reportToggle = document.createElement("button");
-  reportToggle.type = "button";
-  reportToggle.className = "report-toggle";
-  reportToggle.textContent = "⚑ الإبلاغ عن محتوى مشبوه";
-  const reportForm = document.createElement("div");
-  reportForm.hidden = true;
-  const reason = document.createElement("select");
-  reason.setAttribute("aria-label", "سبب البلاغ");
-  [["","اختر سبب البلاغ"],["محتوى مسيء أو غير لائق","محتوى مسيء أو غير لائق"],["احتيال أو تضليل","احتيال أو تضليل"],["انتحال شخصية","انتحال شخصية"],["معلومات تواصل أو بيانات شخصية","معلومات تواصل أو بيانات شخصية"],["محتوى مخالف أو خطير","محتوى مخالف أو خطير"],["سبب آخر","سبب آخر"]].forEach(([value,label]) => {
-    const option = document.createElement("option"); option.value=value; option.textContent=label; reason.appendChild(option);
-  });
-  const reportDetails = document.createElement("textarea");
-  reportDetails.rows = 2;
-  reportDetails.maxLength = 1000;
-  reportDetails.placeholder = "تفاصيل إضافية (اختياري)";
-  const reportSend = document.createElement("button");
-  reportSend.type = "button";
-  reportSend.className = "button";
-  reportSend.textContent = "إرسال البلاغ";
-  const reportStatus = document.createElement("p");
-  reportStatus.className = "auth-message";
-  reportToggle.addEventListener("click", () => { reportForm.hidden = !reportForm.hidden; });
-  reportSend.addEventListener("click", async () => {
-    if (!reason.value) {
-      reportStatus.textContent = "اختر سبب البلاغ أولاً.";
-      reportStatus.classList.add("error");
-      return;
-    }
-    reportSend.disabled = true;
-    try {
-      const { data } = await client.auth.getUser();
-      const { error } = await client.from("talent_reports").insert({
-        talent_id: talent.id,
-        reporter_id: data.user?.id || null,
-        reason: reason.value,
-        details: reportDetails.value.trim()
-      });
-      if (error) throw error;
-      reportStatus.classList.remove("error");
-      reportStatus.textContent = "تم استلام بلاغك. شكراً لمساهمتك في حماية مواهب.";
-      reportSend.disabled = true;
-    } catch (error) {
-      reportStatus.textContent = error.message || "تعذر إرسال البلاغ.";
-      reportStatus.classList.add("error");
-      reportSend.disabled = false;
-    }
-  });
-  reportForm.append(reason, reportDetails, reportSend, reportStatus);
-  reportWrap.append(reportToggle, reportForm);
-  section.appendChild(reportWrap);
   detailCommunity.appendChild(section);
 
   try {
     await refreshReactions();
-    await refreshMyReaction();
     await loadComments();
   } catch (error) {
     status.textContent = "تعذر تحميل بعض التفاعلات. حاول تحديث الصفحة.";
