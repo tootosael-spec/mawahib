@@ -846,22 +846,44 @@ uploadImageButton?.addEventListener("click", async () => {
       });
     if (uploadError) throw uploadError;
 
-    const { error: recordError } = await client.from("talent_media").insert({
+    const { data: mediaRecord, error: recordError } = await client.from("talent_media").insert({
       talent_id: talentId,
       owner_id: userData.user.id,
       media_type: "image",
       file_url: uploadedPath,
       caption: imageCaptionInput?.value.trim() || null,
       scan_status: "pending"
-    });
-    if (recordError) {
+    }).select("id").single();
+    if (recordError || !mediaRecord) {
       await client.storage.from("talent-media").remove([uploadedPath]);
       uploadedPath = "";
-      throw recordError;
+      throw recordError || new Error("تعذر حفظ سجل الصورة.");
     }
+
     imageFileInput.value = "";
     if (imageCaptionInput) imageCaptionInput.value = "";
-    mediaMessage.textContent = "تم رفع الصورة بنجاح وإرسالها للمراجعة. لن تظهر للزوار إلا بعد اعتمادها.";
+    mediaMessage.textContent = "تم رفع الصورة. جارٍ فحصها تلقائياً، وستبقى مخفية حتى اكتمال الفحص.";
+
+    const { data: scanResult, error: scanError } = await client.functions.invoke(
+      "scan-talent-image",
+      { body: { media_id: mediaRecord.id } }
+    );
+
+    if (scanError || !scanResult?.success) {
+      mediaMessage.textContent = "تم رفع الصورة، لكن تعذّر إكمال الفحص. بقيت مخفية وبانتظار إعادة المحاولة.";
+      mediaMessage.classList.add("error");
+      return;
+    }
+
+    if (scanResult.status === "approved") {
+      mediaMessage.textContent = "اجتازت الصورة الفحص وأصبحت معتمدة.";
+      await loadPublishedTalents();
+    } else if (scanResult.status === "rejected") {
+      mediaMessage.textContent = "لم تجتز الصورة فحص المحتوى، ولن تظهر للزوار.";
+    } else {
+      mediaMessage.textContent = "اكتمل الفحص، لكن حالة الصورة غير معروفة. بقيت مخفية.";
+      mediaMessage.classList.add("error");
+    }
   } catch (error) {
     mediaMessage.textContent = error.message || "تعذر رفع الصورة. حاول مرة أخرى.";
     mediaMessage.classList.add("error");
