@@ -119,6 +119,11 @@ const detailTitle = document.querySelector("#detail-title");
 const detailDescription = document.querySelector("#detail-description");
 const detailVideos = document.querySelector("#detail-videos");
 const detailContact = document.querySelector("#detail-contact");
+const detailContactTrigger = document.querySelector("#detail-contact-trigger");
+detailContactTrigger?.addEventListener("click", () => {
+  detailContact?.scrollIntoView({ behavior: "smooth", block: "start" });
+  detailContact?.querySelector("textarea")?.focus({ preventScroll: true });
+});
 const detailCommunity = document.querySelector("#detail-community");
 let publishedTalentRows = [];
 
@@ -127,12 +132,13 @@ function showTalentDetail(talentId) {
   if (!talent || !talentDetail) return;
   detailTitle.textContent = talent.title;
   detailDescription.textContent = talent.description || "موهبة تستحق المشاهدة.";
+  if (detailContactTrigger) detailContactTrigger.hidden = Boolean(talent.isDemo || !talent.owner_id);
   detailVideos.replaceChildren();
   if (detailContact) {
     detailContact.replaceChildren();
     if (!talent.isDemo && talent.owner_id) {
       const heading = document.createElement("h3");
-      heading.textContent = "اطلب هذه الخدمة";
+      heading.textContent = "تواصل معي";
       const hint = document.createElement("p");
       hint.className = "detail-empty";
       hint.textContent = "اكتب طلبك وسيصل إلى صاحب الموهبة داخل مواهب. يلزم تسجيل الدخول لإرسال الطلب.";
