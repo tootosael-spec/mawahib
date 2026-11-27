@@ -751,3 +751,103 @@ body.comments-modal-open{overflow:hidden}
  #account-state .account-profile-head h3{font-size:18px}
  .account-welcome h2{font-size:27px}
 }
+
+
+/* معرض أعمال الموهبة: كل عنصر يملأ الخلية مع أسهم جانبية */
+.talent-gallery{
+  position:relative;
+  width:100%;
+  min-width:0;
+  background:#fbfcfa;
+  overflow:hidden;
+}
+.talent-gallery .talent-media-strip{
+  display:flex;
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  padding:12px 48px 14px;
+  gap:0;
+  direction:rtl;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  scrollbar-width:none;
+}
+.talent-gallery .talent-media-strip::-webkit-scrollbar{display:none}
+.talent-gallery .talent-media-item{
+  box-sizing:border-box;
+  flex:0 0 100%;
+  width:100%;
+  max-width:100%;
+  min-width:100%;
+  min-height:330px;
+  padding:8px;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  background:transparent;
+  scroll-snap-align:start;
+}
+.talent-gallery .talent-media-item img,
+.talent-gallery .talent-media-item video{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  height:310px;
+  min-height:310px;
+  max-height:310px;
+  object-fit:contain;
+  background:#f1f3ef;
+  border-radius:12px;
+}
+.talent-gallery .talent-media-caption{
+  padding:3px 5px 0;
+  text-align:right;
+  font-size:12px;
+}
+.talent-gallery .talent-video-item{
+  justify-content:flex-start;
+  align-items:stretch;
+  min-height:330px;
+  background:transparent;
+}
+.talent-gallery-arrow{
+  position:absolute;
+  z-index:4;
+  top:50%;
+  transform:translateY(-50%);
+  display:grid;
+  place-items:center;
+  width:36px;
+  height:48px;
+  padding:0;
+  border:1px solid #dce5d8;
+  border-radius:12px;
+  background:rgba(255,255,255,.94);
+  color:#315c3d;
+  box-shadow:0 2px 9px rgba(20,42,39,.12);
+  font-size:30px;
+  line-height:1;
+  cursor:pointer;
+}
+.talent-gallery-prev{right:7px}
+.talent-gallery-next{left:7px}
+@media(max-width:600px){
+  .talent-gallery .talent-media-strip{padding:10px 42px 12px;gap:0}
+  .talent-gallery .talent-media-item{
+    flex-basis:100%;
+    width:100%;
+    max-width:100%;
+    min-width:100%;
+    min-height:300px;
+  }
+  .talent-gallery .talent-media-item img,
+  .talent-gallery .talent-media-item video{
+    height:280px;
+    min-height:280px;
+    max-height:280px;
+  }
+  .talent-gallery .talent-video-item{min-height:300px}
+  .talent-gallery-arrow{width:30px;height:42px;font-size:25px}
+}
