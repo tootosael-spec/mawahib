@@ -400,9 +400,7 @@ function getSupportedSocialVideoUrl(value) {
     "instagram.com",
     "facebook.com", "fb.watch"
   ];
-  const isSupported = supportedHosts.some(domain =>
-    host === domain || host.endsWith("." + domain)
-  );
+  const isSupported = supportedHosts.includes(host);
   if (!isSupported) {
     throw new Error("الرابط غير مدعوم. استخدم YouTube أو TikTok أو Instagram أو Facebook.");
   }
