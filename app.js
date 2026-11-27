@@ -361,3 +361,11 @@ client?.auth.onAuthStateChange((_event, session) => showAccount(session?.user ||
 loadPublishedTalents();
 loadTalentCategories();
 refreshSession();
+
+
+// تنقل صفحة الحساب كصفحة مستقلة داخل التطبيق.
+function syncPageView() {
+  document.body.classList.toggle("account-page-mode", window.location.hash === "#account");
+}
+window.addEventListener("hashchange", syncPageView);
+syncPageView();
