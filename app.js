@@ -377,3 +377,70 @@ function syncPageView() {
 }
 window.addEventListener("hashchange", syncPageView);
 syncPageView();
+
+
+const videoFileInput = document.querySelector("#talent-video-file");
+const uploadVideoButton = document.querySelector("#upload-video-button");
+const videoMessage = document.querySelector("#video-message");
+
+uploadVideoButton?.addEventListener("click", async () => {
+  if (!client) return;
+  const talentId = mediaTalentSelect?.value;
+  const file = videoFileInput?.files?.[0];
+  if (videoMessage) {
+    videoMessage.classList.remove("error");
+    videoMessage.textContent = "";
+  }
+  const report = (text, isError = false) => {
+    if (!videoMessage) return;
+    videoMessage.textContent = text;
+    videoMessage.classList.toggle("error", isError);
+  };
+  if (!talentId) return report("اختر ملف الموهبة أولاً.", true);
+  if (!file) return report("اختر فيديو من جهازك أولاً.", true);
+  const allowedTypes = ["video/mp4", "video/webm", "video/quicktime"];
+  if (!allowedTypes.includes(file.type)) {
+    return report("الصيغ المسموحة: MP4 أو WEBM أو MOV فقط.", true);
+  }
+  const maxVideoSize = 20 * 1024 * 1024;
+  if (file.size > maxVideoSize) {
+    return report("حجم الفيديو أكبر من 20 ميجابايت. اختر فيديو أقصر أو أصغر.", true);
+  }
+
+  uploadVideoButton.disabled = true;
+  report("جارٍ رفع الفيديو... لا تغلق الصفحة حتى يكتمل الرفع.");
+  let uploadedPath = "";
+  try {
+    const { data: userData, error: userError } = await client.auth.getUser();
+    if (userError || !userData.user) throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
+    const extension = file.type === "video/mp4" ? "mp4" : file.type === "video/webm" ? "webm" : "mov";
+    uploadedPath = userData.user.id + "/" + talentId + "/" + crypto.randomUUID() + "." + extension;
+    const { error: uploadError } = await client.storage
+      .from("talent-media")
+      .upload(uploadedPath, file, {
+        cacheControl: "3600",
+        contentType: file.type,
+        upsert: false
+      });
+    if (uploadError) throw uploadError;
+
+    const { error: recordError } = await client.from("talent_media").insert({
+      talent_id: talentId,
+      owner_id: userData.user.id,
+      media_type: "video",
+      file_url: uploadedPath,
+      scan_status: "pending"
+    });
+    if (recordError) {
+      await client.storage.from("talent-media").remove([uploadedPath]);
+      uploadedPath = "";
+      throw recordError;
+    }
+    videoFileInput.value = "";
+    report("تم رفع الفيديو وإرساله للمراجعة. لن يظهر للزوار إلا بعد اعتماده.");
+  } catch (error) {
+    report(error.message || "تعذر رفع الفيديو. حاول مرة أخرى.", true);
+  } finally {
+    uploadVideoButton.disabled = false;
+  }
+});
