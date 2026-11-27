@@ -55,3 +55,5 @@ body.account-page-mode .auth-section{
 .detail-videos .button{margin:0}
 .detail-empty{font-size:13px;color:var(--muted)}
 body.detail-open{overflow:hidden}
+
+.sample-label{position:absolute;top:12px;right:12px;padding:6px 10px;border-radius:20px;background:#fff;color:#435b4e;font-size:10px;font-weight:700;box-shadow:0 3px 12px #142a2718}
