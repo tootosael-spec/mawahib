@@ -166,3 +166,191 @@ body.detail-open{overflow:hidden}
 .talent-community-inline .community-comment{padding:9px}
 .talent-community-inline .community-comment p{font-size:12px}
 @media(max-width:600px){.talent-community-inline{padding:0 12px 13px}}
+
+
+
+/* هوية تفاعلات مواهب - تصميم مدمج وهادئ */
+.talent-community-inline{
+  margin-top:auto;
+  padding:14px 16px 16px;
+  background:linear-gradient(180deg,#fbfcf9 0%,#f5f8f2 100%);
+  border-top:1px solid #e8eee4;
+  border-radius:0 0 18px 18px;
+}
+.talent-community-inline .community-section{
+  border:0;
+  padding:0;
+}
+.talent-community-inline .community-section>h3{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin:0 0 11px;
+  color:#53665a;
+  font-size:12px;
+  font-weight:700;
+}
+.talent-community-inline .community-section>h3:before{
+  content:"";
+  width:6px;height:6px;border-radius:50%;
+  background:var(--green);
+}
+.talent-community-inline .reaction-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.talent-community-inline .reaction-button{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:42px;
+  padding:8px 7px;
+  border:1px solid #e2e9df;
+  border-radius:12px;
+  background:#fff;
+  color:#526257;
+  font-size:12px;
+  font-weight:650;
+  transition:background .18s ease,border-color .18s ease,transform .18s ease;
+}
+.talent-community-inline .reaction-button:hover{
+  transform:translateY(-1px);
+  border-color:#b8cbb5;
+  background:#f8fbf6;
+}
+.talent-community-inline .reaction-button .reaction-icon{
+  color:#8a9a8d;
+  font-size:15px;
+}
+.talent-community-inline .reaction-button:first-child .reaction-icon{color:#d46b78}
+.talent-community-inline .reaction-button.selected{
+  border-color:#8eae8c;
+  background:#eaf3e6;
+  color:#315c3d;
+  box-shadow:inset 0 0 0 1px #d6e7d2;
+}
+.talent-community-inline .reaction-button.selected .reaction-icon{color:#397b4a}
+.talent-community-inline .reaction-count{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:22px;
+  height:22px;
+  padding:0 6px;
+  border-radius:20px;
+  background:#f0f3ee;
+  color:#526257;
+  font-size:11px;
+  font-weight:750;
+  font-variant-numeric:tabular-nums;
+}
+.talent-community-inline .reaction-button.selected .reaction-count{
+  background:#d8e9d3;
+  color:#315c3d;
+}
+.talent-community-inline .auth-message{margin:7px 2px 0;font-size:11px}
+.talent-community-inline .comments-toggle{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  min-height:42px;
+  margin-top:9px;
+  padding:9px 12px;
+  border:1px solid #e2e9df;
+  border-radius:12px;
+  background:#fff;
+  color:#435b4b;
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.talent-community-inline .comments-toggle:after{
+  content:"⌄";
+  color:#819184;
+  font-size:17px;
+}
+.talent-community-inline .comments-count{
+  margin-right:auto;
+  margin-left:8px;
+  min-width:23px;
+  padding:3px 7px;
+  border-radius:20px;
+  background:#edf2e9;
+  color:#49654d;
+  text-align:center;
+  font-size:11px;
+  font-weight:750;
+}
+.talent-community-inline .community-comments-panel{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #e7ece3;
+  border-radius:14px;
+  background:#fff;
+}
+.talent-community-inline .community-comments-panel h3{
+  margin:0 0 10px;
+  font-size:13px;
+}
+.talent-community-inline .community-comments{
+  gap:8px;
+  max-height:250px;
+  overflow:auto;
+  margin:0 0 10px;
+}
+.talent-community-inline .community-comment{
+  padding:10px 11px;
+  border:0;
+  border-radius:12px 12px 12px 4px;
+  background:#f4f7f1;
+}
+.talent-community-inline .community-comment strong{
+  color:#4d6652;
+  font-size:11px;
+}
+.talent-community-inline .community-comment p{
+  margin:5px 0;
+  color:#34463a;
+  font-size:12px;
+  line-height:1.75;
+}
+.talent-community-inline .community-comment small{font-size:10px}
+.talent-community-inline .community-comment .comment-report{
+  margin-top:5px;
+  font-size:10px;
+}
+.talent-community-inline .community-section textarea{
+  min-height:76px;
+  margin:9px 0;
+  padding:11px 12px;
+  border:1px solid #e0e8dc;
+  border-radius:12px;
+  background:#fbfcfa;
+  font-size:12px;
+  line-height:1.7;
+}
+.talent-community-inline .community-section textarea:focus{
+  outline:2px solid #dcebd7;
+  border-color:#8eae8c;
+  background:#fff;
+}
+.talent-community-inline .community-section>.button{
+  width:100%;
+  min-height:40px;
+  border-radius:11px;
+  font-size:12px;
+  font-weight:700;
+}
+.talent-community-inline .detail-empty{
+  margin:8px 0;
+  font-size:11px;
+  text-align:center;
+}
+@media(max-width:600px){
+  .talent-community-inline{padding:12px 13px 14px}
+  .talent-community-inline .reaction-button{min-height:40px;font-size:11px}
+}
