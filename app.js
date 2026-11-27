@@ -165,14 +165,16 @@ createTalentButton?.addEventListener("click", async () => {
     if (categoryError) throw categoryError;
     if (!category) throw new Error("هذا المجال غير متاح حالياً. اختر مجالاً آخر.");
 
-    const { error } = await client.from("talents").insert({
+    const { data: createdTalent, error } = await client.from("talents").insert({
       owner_id: userData.user.id,
       title,
       category_id: category.id,
       description,
       status: "pending"
-    });
+    }).select("id").single();
     if (error) throw error;
+    await loadOwnedTalents();
+    if (mediaTalentSelect) mediaTalentSelect.value = createdTalent.id;
     document.querySelector("#talent-title").value = "";
     document.querySelector("#talent-description").value = "";
     categorySelect.value = "";
