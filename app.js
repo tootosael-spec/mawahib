@@ -112,6 +112,7 @@ const detailTitle = document.querySelector("#detail-title");
 const detailDescription = document.querySelector("#detail-description");
 const detailVideos = document.querySelector("#detail-videos");
 const detailContact = document.querySelector("#detail-contact");
+const detailCommunity = document.querySelector("#detail-community");
 let publishedTalentRows = [];
 
 function showTalentDetail(talentId) {
@@ -233,8 +234,234 @@ function showTalentDetail(talentId) {
       detailVideos.appendChild(link);
     });
   }
+  renderTalentCommunity(talent);
   talentDetail.hidden = false;
   document.body.classList.add("detail-open");
+}
+
+
+async function renderTalentCommunity(talent) {
+  if (!detailCommunity) return;
+  detailCommunity.replaceChildren();
+  if (talent.isDemo || !client) {
+    const note = document.createElement("p");
+    note.className = "detail-empty";
+    note.textContent = "التفاعل والتعليقات والبلاغات متاحة على ملفات المواهب الحقيقية فقط.";
+    detailCommunity.appendChild(note);
+    return;
+  }
+
+  const section = document.createElement("section");
+  section.className = "community-section";
+  const reactionHeading = document.createElement("h3");
+  reactionHeading.textContent = "شارك رأيك";
+  const reactionRow = document.createElement("div");
+  reactionRow.className = "reaction-row";
+  const likeButton = document.createElement("button");
+  const dislikeButton = document.createElement("button");
+  likeButton.type = dislikeButton.type = "button";
+  likeButton.className = dislikeButton.className = "reaction-button";
+  const likeCount = document.createElement("span");
+  const dislikeCount = document.createElement("span");
+  likeButton.append("👍 إعجاب ", likeCount);
+  dislikeButton.append("👎 عدم إعجاب ", dislikeCount);
+  reactionRow.append(likeButton, dislikeButton);
+
+  const status = document.createElement("p");
+  status.className = "auth-message";
+  const refreshReactions = async () => {
+    const [likes, dislikes] = await Promise.all([
+      client.from("talent_likes").select("user_id", { count: "exact", head: true }).eq("talent_id", talent.id),
+      client.from("talent_dislikes").select("user_id", { count: "exact", head: true }).eq("talent_id", talent.id)
+    ]);
+    if (likes.error || dislikes.error) throw likes.error || dislikes.error;
+    likeCount.textContent = String(likes.count || 0);
+    dislikeCount.textContent = String(dislikes.count || 0);
+  };
+  const refreshMyReaction = async () => {
+    const { data } = await client.auth.getUser();
+    const user = data.user;
+    likeButton.classList.remove("selected");
+    dislikeButton.classList.remove("selected");
+    if (!user) return;
+    const [like, dislike] = await Promise.all([
+      client.from("talent_likes").select("user_id").eq("talent_id", talent.id).eq("user_id", user.id).maybeSingle(),
+      client.from("talent_dislikes").select("user_id").eq("talent_id", talent.id).eq("user_id", user.id).maybeSingle()
+    ]);
+    if (like.data) likeButton.classList.add("selected");
+    if (dislike.data) dislikeButton.classList.add("selected");
+  };
+  const setReaction = async (kind) => {
+    likeButton.disabled = dislikeButton.disabled = true;
+    try {
+      const { data, error } = await client.auth.getUser();
+      if (error || !data.user) {
+        status.textContent = "سجّل الدخول أولاً للتفاعل مع المواهب.";
+        return;
+      }
+      const userId = data.user.id;
+      const ownTable = kind === "like" ? "talent_likes" : "talent_dislikes";
+      const otherTable = kind === "like" ? "talent_dislikes" : "talent_likes";
+      const { data: existing, error: readError } = await client.from(ownTable)
+        .select("user_id").eq("talent_id", talent.id).eq("user_id", userId).maybeSingle();
+      if (readError) throw readError;
+      if (existing) {
+        const { error: removeError } = await client.from(ownTable)
+          .delete().eq("talent_id", talent.id).eq("user_id", userId);
+        if (removeError) throw removeError;
+      } else {
+        const { error: clearError } = await client.from(otherTable)
+          .delete().eq("talent_id", talent.id).eq("user_id", userId);
+        if (clearError) throw clearError;
+        const { error: addError } = await client.from(ownTable)
+          .insert({ talent_id: talent.id, user_id: userId });
+        if (addError) throw addError;
+      }
+      status.textContent = "";
+      await refreshReactions();
+      await refreshMyReaction();
+    } catch (error) {
+      status.textContent = error.message || "تعذر تسجيل تفاعلك.";
+      status.classList.add("error");
+    } finally {
+      likeButton.disabled = dislikeButton.disabled = false;
+    }
+  };
+  likeButton.addEventListener("click", () => setReaction("like"));
+  dislikeButton.addEventListener("click", () => setReaction("dislike"));
+  section.append(reactionHeading, reactionRow, status);
+
+  const commentsHeading = document.createElement("h3");
+  commentsHeading.textContent = "تعليقات الزوار";
+  const commentsList = document.createElement("div");
+  commentsList.className = "community-comments";
+  const loadComments = async () => {
+    commentsList.replaceChildren();
+    const { data, error } = await client.from("talent_comments")
+      .select("id,body,created_at,profiles(display_name)")
+      .eq("talent_id", talent.id).eq("status", "published")
+      .order("created_at", { ascending: false }).limit(50);
+    if (error) throw error;
+    if (!data?.length) {
+      const empty = document.createElement("p");
+      empty.className = "detail-empty";
+      empty.textContent = "لا توجد تعليقات منشورة حتى الآن.";
+      commentsList.appendChild(empty);
+      return;
+    }
+    data.forEach(comment => {
+      const item = document.createElement("article");
+      item.className = "community-comment";
+      const author = document.createElement("strong");
+      author.textContent = comment.profiles?.display_name || "زائر";
+      const body = document.createElement("p");
+      body.textContent = comment.body;
+      const date = document.createElement("small");
+      date.textContent = new Date(comment.created_at).toLocaleDateString("ar-SA");
+      item.append(author, body, date);
+      commentsList.appendChild(item);
+    });
+  };
+  const commentInput = document.createElement("textarea");
+  commentInput.rows = 3;
+  commentInput.maxLength = 1000;
+  commentInput.placeholder = "اكتب تعليقك (حتى 1000 حرف)...";
+  commentInput.setAttribute("aria-label", "اكتب تعليقك");
+  const commentButton = document.createElement("button");
+  commentButton.type = "button";
+  commentButton.className = "button";
+  commentButton.textContent = "إرسال التعليق";
+  const commentStatus = document.createElement("p");
+  commentStatus.className = "auth-message";
+  commentButton.addEventListener("click", async () => {
+    const body = commentInput.value.trim();
+    if (body.length < 1) {
+      commentStatus.textContent = "اكتب تعليقك أولاً.";
+      commentStatus.classList.add("error");
+      return;
+    }
+    commentButton.disabled = true;
+    try {
+      const { data, error: authError } = await client.auth.getUser();
+      if (authError || !data.user) throw new Error("سجّل الدخول لإضافة تعليق.");
+      const { error } = await client.from("talent_comments").insert({
+        talent_id: talent.id, user_id: data.user.id, body, status: "pending"
+      });
+      if (error) throw error;
+      commentInput.value = "";
+      commentStatus.classList.remove("error");
+      commentStatus.textContent = "وصل تعليقك، وسيظهر بعد المراجعة.";
+    } catch (error) {
+      commentStatus.textContent = error.message || "تعذر إرسال التعليق.";
+      commentStatus.classList.add("error");
+    } finally {
+      commentButton.disabled = false;
+    }
+  });
+  section.append(commentsHeading, commentsList, commentInput, commentButton, commentStatus);
+
+  const reportWrap = document.createElement("div");
+  reportWrap.className = "community-report";
+  const reportToggle = document.createElement("button");
+  reportToggle.type = "button";
+  reportToggle.className = "report-toggle";
+  reportToggle.textContent = "⚑ الإبلاغ عن محتوى مشبوه";
+  const reportForm = document.createElement("div");
+  reportForm.hidden = true;
+  const reason = document.createElement("select");
+  reason.setAttribute("aria-label", "سبب البلاغ");
+  [["","اختر سبب البلاغ"],["محتوى مسيء أو غير لائق","محتوى مسيء أو غير لائق"],["احتيال أو تضليل","احتيال أو تضليل"],["انتحال شخصية","انتحال شخصية"],["معلومات تواصل أو بيانات شخصية","معلومات تواصل أو بيانات شخصية"],["محتوى مخالف أو خطير","محتوى مخالف أو خطير"],["سبب آخر","سبب آخر"]].forEach(([value,label]) => {
+    const option = document.createElement("option"); option.value=value; option.textContent=label; reason.appendChild(option);
+  });
+  const reportDetails = document.createElement("textarea");
+  reportDetails.rows = 2;
+  reportDetails.maxLength = 1000;
+  reportDetails.placeholder = "تفاصيل إضافية (اختياري)";
+  const reportSend = document.createElement("button");
+  reportSend.type = "button";
+  reportSend.className = "button";
+  reportSend.textContent = "إرسال البلاغ";
+  const reportStatus = document.createElement("p");
+  reportStatus.className = "auth-message";
+  reportToggle.addEventListener("click", () => { reportForm.hidden = !reportForm.hidden; });
+  reportSend.addEventListener("click", async () => {
+    if (!reason.value) {
+      reportStatus.textContent = "اختر سبب البلاغ أولاً.";
+      reportStatus.classList.add("error");
+      return;
+    }
+    reportSend.disabled = true;
+    try {
+      const { data } = await client.auth.getUser();
+      const { error } = await client.from("talent_reports").insert({
+        talent_id: talent.id,
+        reporter_id: data.user?.id || null,
+        reason: reason.value,
+        details: reportDetails.value.trim()
+      });
+      if (error) throw error;
+      reportStatus.classList.remove("error");
+      reportStatus.textContent = "تم استلام بلاغك. شكراً لمساهمتك في حماية مواهب.";
+      reportSend.disabled = true;
+    } catch (error) {
+      reportStatus.textContent = error.message || "تعذر إرسال البلاغ.";
+      reportStatus.classList.add("error");
+      reportSend.disabled = false;
+    }
+  });
+  reportForm.append(reason, reportDetails, reportSend, reportStatus);
+  reportWrap.append(reportToggle, reportForm);
+  section.appendChild(reportWrap);
+  detailCommunity.appendChild(section);
+
+  try {
+    await refreshReactions();
+    await refreshMyReaction();
+    await loadComments();
+  } catch (error) {
+    status.textContent = "تعذر تحميل بعض التفاعلات. حاول تحديث الصفحة.";
+    status.classList.add("error");
+  }
 }
 
 function closeTalentDetail() {
