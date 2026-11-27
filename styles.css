@@ -375,7 +375,9 @@ body.comments-modal-open{overflow:hidden}
 }
 .community-comments-dialog{
   position:relative;z-index:1;
-  width:min(520px,100%);max-height:min(78vh,680px);
+  width:min(520px,calc(100vw - 28px));
+  height:min(680px,calc(100dvh - 40px));
+  min-height:360px;
   display:flex;flex-direction:column;overflow:hidden;
   border:1px solid #e5ebe1;border-radius:18px;
   background:#fff;box-shadow:0 24px 80px #0004;
@@ -391,16 +393,20 @@ body.comments-modal-open{overflow:hidden}
   background:#edf2e9;color:var(--ink);font-size:25px;line-height:1;cursor:pointer;
 }
 .community-comments-dialog .community-comments-panel{
-  display:block!important;overflow:auto;overscroll-behavior:contain;
+  display:block!important;flex:1;min-height:0;overflow-y:auto;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
   padding:16px;background:#fff;
 }
 .community-comments-dialog .community-comments-panel h3{display:none}
 .community-comments-dialog .community-comments{
-  max-height:34vh;overflow:auto;
+  max-height:none;overflow:visible;
 }
 @media(max-width:600px){
   .community-comments-modal{padding:14px}
-  .community-comments-dialog{max-height:82vh;border-radius:16px}
+  .community-comments-dialog{
+    width:calc(100vw - 28px);height:calc(100dvh - 56px);
+    min-height:300px;border-radius:16px
+  }
   .community-comments-dialog .community-comments-panel{padding:13px}
 }
 
