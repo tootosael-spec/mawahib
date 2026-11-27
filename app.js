@@ -77,7 +77,7 @@ async function loadPublishedTalents() {
   if (!client || !grid) return;
   const { data, error } = await client
     .from("talents")
-    .select("id,title,description,cover_url,created_at,talent_categories(name)")
+    .select("id,owner_id,title,description,cover_url,created_at,talent_categories(name)")
     .eq("status", "published")
     .order("created_at", { ascending: false });
   if (error) {
@@ -111,6 +111,7 @@ const talentDetail = document.querySelector("#talent-detail");
 const detailTitle = document.querySelector("#detail-title");
 const detailDescription = document.querySelector("#detail-description");
 const detailVideos = document.querySelector("#detail-videos");
+const detailContact = document.querySelector("#detail-contact");
 let publishedTalentRows = [];
 
 function showTalentDetail(talentId) {
@@ -119,6 +120,87 @@ function showTalentDetail(talentId) {
   detailTitle.textContent = talent.title;
   detailDescription.textContent = talent.description || "موهبة تستحق المشاهدة.";
   detailVideos.replaceChildren();
+  if (detailContact) {
+    detailContact.replaceChildren();
+    if (!talent.isDemo && talent.owner_id) {
+      const heading = document.createElement("h3");
+      heading.textContent = "اطلب هذه الخدمة";
+      const hint = document.createElement("p");
+      hint.className = "detail-empty";
+      hint.textContent = "اكتب طلبك وسيصل إلى صاحب الموهبة داخل مواهب. يلزم تسجيل الدخول لإرسال الطلب.";
+      const field = document.createElement("textarea");
+      field.maxLength = 2000;
+      field.rows = 4;
+      field.placeholder = "مثلاً: أحتاج تصميم شعار لمشروعي...";
+      field.setAttribute("aria-label", "تفاصيل طلب الخدمة");
+      const send = document.createElement("button");
+      send.type = "button";
+      send.className = "button";
+      send.textContent = "إرسال طلب الخدمة";
+      const status = document.createElement("p");
+      status.className = "auth-message";
+      send.addEventListener("click", async () => {
+        const body = field.value.trim();
+        if (body.length < 2) {
+          status.textContent = "اكتب تفاصيل الطلب أولاً.";
+          status.classList.add("error");
+          return;
+        }
+        send.disabled = true;
+        status.classList.remove("error");
+        status.textContent = "جارٍ إرسال طلبك...";
+        try {
+          const { data: userData, error: userError } = await client.auth.getUser();
+          if (userError || !userData.user) {
+            status.textContent = "سجّل الدخول أولاً لإرسال طلبك.";
+            const login = document.createElement("a");
+            login.href = "account.html#account";
+            login.className = "text-link";
+            login.textContent = "الانتقال إلى تسجيل الدخول";
+            status.appendChild(document.createTextNode(" "));
+            status.appendChild(login);
+            return;
+          }
+          if (userData.user.id === talent.owner_id) {
+            throw new Error("لا يمكنك إرسال طلب إلى ملف موهبتك.");
+          }
+          let { data: conversation, error: conversationError } = await client
+            .from("talent_conversations")
+            .select("id")
+            .eq("talent_id", talent.id)
+            .eq("client_id", userData.user.id)
+            .eq("talent_owner_id", talent.owner_id)
+            .eq("status", "open")
+            .limit(1)
+            .maybeSingle();
+          if (conversationError) throw conversationError;
+          if (!conversation) {
+            const created = await client.from("talent_conversations").insert({
+              talent_id: talent.id,
+              client_id: userData.user.id,
+              talent_owner_id: talent.owner_id
+            }).select("id").single();
+            if (created.error) throw created.error;
+            conversation = created.data;
+          }
+          const { error: messageError } = await client.from("talent_messages").insert({
+            conversation_id: conversation.id,
+            sender_id: userData.user.id,
+            body
+          });
+          if (messageError) throw messageError;
+          field.value = "";
+          status.textContent = "وصل طلبك بنجاح. يمكنك متابعة الرد من صفحة «موهبتي».";
+        } catch (error) {
+          status.textContent = error.message || "تعذر إرسال الطلب. حاول مرة أخرى.";
+          status.classList.add("error");
+        } finally {
+          send.disabled = false;
+        }
+      });
+      detailContact.append(heading, hint, field, send, status);
+    }
+  }
   if (talent.isDemo) {
     const sample = document.createElement("p");
     sample.className = "detail-empty";
@@ -203,6 +285,7 @@ function showAccount(user) {
   formWrap.hidden = true;
   accountState.hidden = false;
   loadOwnedTalents();
+  loadConversations();
   document.querySelector("#account-heading").textContent =
     `أهلاً بك ${user.user_metadata?.display_name || ""} في مواهب`;
   document.querySelector("#account-email").textContent = user.email || "";
@@ -559,5 +642,118 @@ addVideoLinkButton?.addEventListener("click", async () => {
     report(error.message || "تعذر إرسال الرابط. حاول مرة أخرى.", true);
   } finally {
     addVideoLinkButton.disabled = false;
+  }
+});
+
+
+// صندوق الرسائل الداخلي — لا يستطيع قراءة الرسائل إلا طرفا المحادثة.
+let activeConversationId = null;
+const conversationsList = document.querySelector("#conversations-list");
+const conversationView = document.querySelector("#conversation-view");
+const conversationMessages = document.querySelector("#conversation-messages");
+const conversationHeading = document.querySelector("#conversation-heading");
+const replyInput = document.querySelector("#reply-message");
+const replyButton = document.querySelector("#send-reply-button");
+const replyStatus = document.querySelector("#reply-message-status");
+
+async function loadConversations() {
+  if (!client || !conversationsList) return;
+  conversationsList.textContent = "جارٍ تحميل الرسائل...";
+  try {
+    const { data: userData, error: userError } = await client.auth.getUser();
+    if (userError || !userData.user) throw new Error("سجّل الدخول لعرض رسائلك.");
+    const { data, error } = await client
+      .from("talent_conversations")
+      .select("id,talent_id,client_id,talent_owner_id,created_at,talents(title)")
+      .order("updated_at", { ascending: false });
+    if (error) throw error;
+    conversationsList.replaceChildren();
+    if (!data?.length) {
+      conversationsList.textContent = "لا توجد رسائل أو طلبات حتى الآن.";
+      return;
+    }
+    data.forEach(item => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "conversation-list-item";
+      const isOwner = item.talent_owner_id === userData.user.id;
+      button.textContent = (item.talents?.title || "طلب خدمة") +
+        (isOwner ? " — طلب وارد" : " — طلب أرسلته");
+      button.addEventListener("click", () => openConversation(item.id));
+      conversationsList.appendChild(button);
+    });
+  } catch (error) {
+    conversationsList.textContent = error.message || "تعذر تحميل الرسائل.";
+  }
+}
+
+async function openConversation(conversationId) {
+  if (!client || !conversationMessages) return;
+  activeConversationId = conversationId;
+  conversationView.hidden = false;
+  conversationMessages.textContent = "جارٍ تحميل المحادثة...";
+  try {
+    const { data: userData, error: userError } = await client.auth.getUser();
+    if (userError || !userData.user) throw new Error("انتهت جلسة الدخول.");
+    const { data: conversation, error: conversationError } = await client
+      .from("talent_conversations")
+      .select("id,talent_id,client_id,talent_owner_id,talents(title)")
+      .eq("id", conversationId)
+      .single();
+    if (conversationError) throw conversationError;
+    conversationHeading.textContent = "المحادثة: " + (conversation.talents?.title || "طلب خدمة");
+    const { data, error } = await client
+      .from("talent_messages")
+      .select("id,sender_id,body,created_at")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    conversationMessages.replaceChildren();
+    (data || []).forEach(item => {
+      const bubble = document.createElement("div");
+      bubble.className = "conversation-bubble" +
+        (item.sender_id === userData.user.id ? " mine" : " theirs");
+      const body = document.createElement("p");
+      body.textContent = item.body;
+      const time = document.createElement("small");
+      time.textContent = new Date(item.created_at).toLocaleString("ar-SA");
+      bubble.append(body, time);
+      conversationMessages.appendChild(bubble);
+    });
+    conversationMessages.scrollTop = conversationMessages.scrollHeight;
+  } catch (error) {
+    conversationMessages.textContent = error.message || "تعذر تحميل المحادثة.";
+  }
+}
+
+document.querySelector("#refresh-conversations-button")?.addEventListener("click", loadConversations);
+replyButton?.addEventListener("click", async () => {
+  const body = replyInput?.value.trim() || "";
+  if (!activeConversationId || body.length < 1) {
+    if (replyStatus) replyStatus.textContent = "اكتب رسالتك أولاً.";
+    return;
+  }
+  replyButton.disabled = true;
+  if (replyStatus) replyStatus.textContent = "جارٍ إرسال الرد...";
+  try {
+    const { data: userData, error: userError } = await client.auth.getUser();
+    if (userError || !userData.user) throw new Error("انتهت جلسة الدخول.");
+    const { error } = await client.from("talent_messages").insert({
+      conversation_id: activeConversationId,
+      sender_id: userData.user.id,
+      body
+    });
+    if (error) throw error;
+    replyInput.value = "";
+    if (replyStatus) replyStatus.textContent = "تم إرسال الرد.";
+    await openConversation(activeConversationId);
+    await loadConversations();
+  } catch (error) {
+    if (replyStatus) {
+      replyStatus.textContent = error.message || "تعذر إرسال الرد.";
+      replyStatus.classList.add("error");
+    }
+  } finally {
+    replyButton.disabled = false;
   }
 });
