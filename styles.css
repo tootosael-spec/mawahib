@@ -148,3 +148,21 @@ body.detail-open{overflow:hidden}
   .talent-card-actions{padding:0 14px 14px;gap:7px}
   .talent-card-actions button{font-size:12px;padding:10px 4px}
 }
+
+
+/* تفاعل مباشر داخل بطاقة الموهبة */
+.talent-community-inline{padding:0 14px 15px;margin-top:auto}
+.talent-community-inline .community-section{border-top:1px solid var(--line);padding-top:12px}
+.talent-community-inline .community-section h3{font-size:13px;margin:0 0 9px}
+.talent-community-inline .reaction-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.talent-community-inline .reaction-button{padding:9px 5px;font-size:12px;border-radius:9px}
+.talent-community-inline .auth-message{font-size:11px;margin:6px 0}
+.talent-community-inline .comments-toggle{width:100%;margin-top:7px;border:1px solid var(--line);border-radius:9px;background:#f8faf6;color:var(--ink);padding:9px;font:inherit;font-size:12px;cursor:pointer}
+.talent-community-inline .comments-toggle:hover{border-color:var(--green);background:#e7efdf}
+.talent-community-inline .community-comments-panel{margin-top:9px}
+.talent-community-inline .community-comments-panel[hidden]{display:none}
+.talent-community-inline .community-section textarea{min-height:72px;font-size:12px}
+.talent-community-inline .community-section .button{font-size:12px;padding:9px 12px}
+.talent-community-inline .community-comment{padding:9px}
+.talent-community-inline .community-comment p{font-size:12px}
+@media(max-width:600px){.talent-community-inline{padding:0 12px 13px}}
