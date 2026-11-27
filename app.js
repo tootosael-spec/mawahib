@@ -42,13 +42,17 @@ function renderTalents(rows) {
       ...(talent.approvedMedia || []).filter(media => media.media_type === "image" && media.display_url && media.display_url !== talent.cover_url),
       ...(talent.approvedMedia || []).filter(media => media.media_type === "video")
     ];
-    const mediaStrip = mediaItems.length ? `<div class="talent-media-strip" aria-label="صور وفيديوهات الموهبة">
+    const mediaStrip = mediaItems.length ? `<div class="talent-gallery">
+      <button class="talent-gallery-arrow talent-gallery-prev" type="button" aria-label="الصورة السابقة">‹</button>
+      <div class="talent-media-strip" aria-label="صور وفيديوهات الموهبة">
       ${mediaItems.map((media, mediaIndex) => {
         const caption = media.caption ? `<p class="talent-media-caption">${escapeHtml(media.caption)}</p>` : "";
         return media.media_type === "image"
           ? `<figure class="talent-media-item"><img src="${escapeHtml(media.display_url)}" alt="عمل ${mediaIndex + 1}" loading="lazy">${caption}</figure>`
-          : `<a class="talent-media-item talent-video-item" href="${escapeHtml(media.file_url)}" target="_blank" rel="noopener noreferrer"><span class="talent-video-play">▶</span><strong>مشاهدة الفيديو ${mediaIndex + 1}</strong>${caption}</a>`;
+          : `<figure class="talent-media-item talent-video-item"><video controls playsinline preload="metadata" src="${escapeHtml(media.file_url)}"></video>${caption}</figure>`;
       }).join("")}
+      </div>
+      <button class="talent-gallery-arrow talent-gallery-next" type="button" aria-label="الصورة التالية">›</button>
     </div>` : "";
     const contactButton = !talent.isDemo && talent.owner_id ? `<button class="talent-card-contact" type="button" data-contact-talent="${escapeHtml(talent.id)}">تواصل معي</button>` : "";
     return `<article class="talent-card" data-talent-id="${escapeHtml(talent.id)}" data-category="${escapeHtml(shortCategory)}" data-name="${escapeHtml(talent.title)}">
@@ -61,6 +65,11 @@ function renderTalents(rows) {
   }).join("");
   if (demoNote) demoNote.hidden = false;
   applyFilters();
+  grid.querySelectorAll(".talent-gallery").forEach(gallery => {
+    const strip = gallery.querySelector(".talent-media-strip");
+    gallery.querySelector(".talent-gallery-prev")?.addEventListener("click", () => strip.scrollBy({ left: strip.clientWidth, behavior: "smooth" }));
+    gallery.querySelector(".talent-gallery-next")?.addEventListener("click", () => strip.scrollBy({ left: -strip.clientWidth, behavior: "smooth" }));
+  });
   displayRows.forEach(talent => {
     if (talent.isDemo) return;
     const card = [...grid.querySelectorAll(".talent-card")].find(item => item.dataset.talentId === talent.id);
