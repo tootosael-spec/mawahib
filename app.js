@@ -43,15 +43,17 @@ function renderTalents(rows) {
     return `<article class="talent-card" data-talent-id="${escapeHtml(talent.id)}" data-category="${escapeHtml(shortCategory)}" data-name="${escapeHtml(talent.title)}" tabindex="0" role="button" aria-label="عرض موهبة ${escapeHtml(talent.title)}">
       <div class="talent-art ${palettes[index % palettes.length]}">${artwork}${sampleLabel}</div>
       <div class="talent-info"><div><h3>${escapeHtml(talent.title)}</h3><p>${escapeHtml(talent.description || "موهبة تستحق المشاهدة")}</p></div><span class="talent-icon">✦</span></div>
-      <div class="talent-card-actions" aria-label="تفاعلات الموهبة">
-        <button type="button" data-community-action="like" aria-label="إعجاب">👍 <span>إعجاب</span></button>
-        <button type="button" data-community-action="dislike" aria-label="عدم إعجاب">👎 <span>عدم إعجاب</span></button>
-        <button type="button" data-community-action="comments" aria-label="التعليقات">💬 <span>تعليق</span></button>
-      </div>
+      <div class="talent-community-inline" aria-label="التفاعل والتعليقات"></div>
     </article>`;
   }).join("");
   if (demoNote) demoNote.hidden = false;
   applyFilters();
+  displayRows.forEach(talent => {
+    if (talent.isDemo) return;
+    const card = [...grid.querySelectorAll(".talent-card")].find(item => item.dataset.talentId === talent.id);
+    const target = card?.querySelector(".talent-community-inline");
+    if (target) renderTalentCommunity(talent, target, true);
+  });
 }
 
 function applyFilters() {
@@ -255,9 +257,9 @@ function getCommunityVisitorId() {
   return id;
 }
 
-async function renderTalentCommunity(talent) {
-  if (!detailCommunity) return;
-  detailCommunity.replaceChildren();
+async function renderTalentCommunity(talent, target = detailCommunity, inline = false) {
+  if (!target) return;
+  target.replaceChildren();
   if (talent.isDemo || !client) {
     const note = document.createElement("p");
     note.className = "detail-empty";
@@ -277,6 +279,8 @@ async function renderTalentCommunity(talent) {
   const dislikeButton = document.createElement("button");
   likeButton.type = dislikeButton.type = "button";
   likeButton.className = dislikeButton.className = "reaction-button";
+  likeButton.dataset.communityAction = "like";
+  dislikeButton.dataset.communityAction = "dislike";
   const likeCount = document.createElement("span");
   const dislikeCount = document.createElement("span");
   likeButton.append("👍 إعجاب ", likeCount);
@@ -350,8 +354,20 @@ async function renderTalentCommunity(talent) {
   };
   likeButton.addEventListener("click", () => setReaction("like"));
   dislikeButton.addEventListener("click", () => setReaction("dislike"));
-  section.append(reactionHeading, reactionRow, status);
-
+  const commentsPanel = document.createElement("div");
+  commentsPanel.className = "community-comments-panel";
+  commentsPanel.hidden = inline;
+  const commentsToggle = document.createElement("button");
+  commentsToggle.type = "button";
+  commentsToggle.className = "comments-toggle";
+  commentsToggle.dataset.communityAction = "comments";
+  commentsToggle.textContent = "💬 عرض التعليقات";
+  commentsToggle.addEventListener("click", event => {
+    event.stopPropagation();
+    commentsPanel.hidden = !commentsPanel.hidden;
+    commentsToggle.textContent = commentsPanel.hidden ? "💬 عرض التعليقات" : "إخفاء التعليقات";
+    if (!commentsPanel.hidden) commentsPanel.scrollIntoView({behavior:"smooth",block:"nearest"});
+  });
   const commentsHeading = document.createElement("h3");
   commentsHeading.textContent = "تعليقات الزوار";
   const commentsList = document.createElement("div");
@@ -450,8 +466,9 @@ async function renderTalentCommunity(talent) {
       commentButton.disabled = false;
     }
   });
-  section.append(commentsHeading, commentsList, commentInput, commentButton, commentStatus);
-  detailCommunity.appendChild(section);
+  commentsPanel.append(commentsHeading, commentsList, commentInput, commentButton, commentStatus);
+  section.append(reactionHeading, reactionRow, status, commentsToggle, commentsPanel);
+  target.appendChild(section);
 
   try {
     await refreshReactions();
@@ -471,18 +488,8 @@ function closeTalentDetail() {
 grid?.addEventListener("click", event => {
   const card = event.target.closest(".talent-card");
   if (!card) return;
-  const actionButton = event.target.closest("[data-community-action]");
+  if (event.target.closest(".talent-community-inline")) return;
   showTalentDetail(card.dataset.talentId);
-  if (actionButton) {
-    setTimeout(() => {
-      const community = document.querySelector("#detail-community");
-      community?.scrollIntoView({ behavior: "smooth", block: "start" });
-      const action = actionButton.dataset.communityAction;
-      if (action === "comments") document.querySelector("#detail-community textarea")?.focus();
-      if (action === "like") document.querySelector(".reaction-button")?.focus();
-      if (action === "dislike") document.querySelectorAll(".reaction-button")[1]?.focus();
-    }, 50);
-  }
 });
 grid?.addEventListener("keydown", event => {
   if (event.key !== "Enter" && event.key !== " ") return;
