@@ -379,68 +379,84 @@ window.addEventListener("hashchange", syncPageView);
 syncPageView();
 
 
-const videoFileInput = document.querySelector("#talent-video-file");
-const uploadVideoButton = document.querySelector("#upload-video-button");
+const videoUrlInput = document.querySelector("#media-video-url");
+const addVideoLinkButton = document.querySelector("#add-video-link-button");
 const videoMessage = document.querySelector("#video-message");
 
-uploadVideoButton?.addEventListener("click", async () => {
+function getSupportedSocialVideoUrl(value) {
+  let parsed;
+  try {
+    parsed = new URL(value.trim());
+  } catch {
+    throw new Error("أدخل رابط فيديو صحيحاً يبدأ بـ https://");
+  }
+  if (parsed.protocol !== "https:") {
+    throw new Error("لأمان حسابك، استخدم رابطاً آمناً يبدأ بـ https://");
+  }
+  const host = parsed.hostname.toLowerCase().replace(/^www\\./, "");
+  const supportedHosts = [
+    "youtube.com", "m.youtube.com", "youtu.be",
+    "tiktok.com", "vm.tiktok.com", "vt.tiktok.com",
+    "instagram.com",
+    "facebook.com", "fb.watch"
+  ];
+  const isSupported = supportedHosts.some(domain =>
+    host === domain || host.endsWith("." + domain)
+  );
+  if (!isSupported) {
+    throw new Error("الرابط غير مدعوم. استخدم YouTube أو TikTok أو Instagram أو Facebook.");
+  }
+  return parsed.href;
+}
+
+addVideoLinkButton?.addEventListener("click", async () => {
   if (!client) return;
   const talentId = mediaTalentSelect?.value;
-  const file = videoFileInput?.files?.[0];
-  if (videoMessage) {
-    videoMessage.classList.remove("error");
-    videoMessage.textContent = "";
-  }
+  const rawUrl = videoUrlInput?.value || "";
   const report = (text, isError = false) => {
     if (!videoMessage) return;
     videoMessage.textContent = text;
     videoMessage.classList.toggle("error", isError);
   };
   if (!talentId) return report("اختر ملف الموهبة أولاً.", true);
-  if (!file) return report("اختر فيديو من جهازك أولاً.", true);
-  const allowedTypes = ["video/mp4", "video/webm", "video/quicktime"];
-  if (!allowedTypes.includes(file.type)) {
-    return report("الصيغ المسموحة: MP4 أو WEBM أو MOV فقط.", true);
-  }
-  const maxVideoSize = 20 * 1024 * 1024;
-  if (file.size > maxVideoSize) {
-    return report("حجم الفيديو أكبر من 20 ميجابايت. اختر فيديو أقصر أو أصغر.", true);
+
+  let videoUrl;
+  try {
+    videoUrl = getSupportedSocialVideoUrl(rawUrl);
+  } catch (error) {
+    return report(error.message, true);
   }
 
-  uploadVideoButton.disabled = true;
-  report("جارٍ رفع الفيديو... لا تغلق الصفحة حتى يكتمل الرفع.");
-  let uploadedPath = "";
+  addVideoLinkButton.disabled = true;
+  report("جارٍ إرسال رابط الفيديو للمراجعة...");
   try {
     const { data: userData, error: userError } = await client.auth.getUser();
     if (userError || !userData.user) throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
-    const extension = file.type === "video/mp4" ? "mp4" : file.type === "video/webm" ? "webm" : "mov";
-    uploadedPath = userData.user.id + "/" + talentId + "/" + crypto.randomUUID() + "." + extension;
-    const { error: uploadError } = await client.storage
-      .from("talent-media")
-      .upload(uploadedPath, file, {
-        cacheControl: "3600",
-        contentType: file.type,
-        upsert: false
-      });
-    if (uploadError) throw uploadError;
+
+    const { data: existing, error: lookupError } = await client
+      .from("talent_media")
+      .select("id")
+      .eq("talent_id", talentId)
+      .eq("owner_id", userData.user.id)
+      .eq("file_url", videoUrl)
+      .maybeSingle();
+    if (lookupError) throw lookupError;
+    if (existing) throw new Error("سبق أن أرسلت هذا الرابط لهذه الموهبة.");
 
     const { error: recordError } = await client.from("talent_media").insert({
       talent_id: talentId,
       owner_id: userData.user.id,
       media_type: "video",
-      file_url: uploadedPath,
+      file_url: videoUrl,
       scan_status: "pending"
     });
-    if (recordError) {
-      await client.storage.from("talent-media").remove([uploadedPath]);
-      uploadedPath = "";
-      throw recordError;
-    }
-    videoFileInput.value = "";
-    report("تم رفع الفيديو وإرساله للمراجعة. لن يظهر للزوار إلا بعد اعتماده.");
+    if (recordError) throw recordError;
+
+    videoUrlInput.value = "";
+    report("تم إرسال رابط الفيديو للمراجعة. لن يظهر للزوار إلا بعد اعتماد الرابط والموهبة.");
   } catch (error) {
-    report(error.message || "تعذر رفع الفيديو. حاول مرة أخرى.", true);
+    report(error.message || "تعذر إرسال الرابط. حاول مرة أخرى.", true);
   } finally {
-    uploadVideoButton.disabled = false;
+    addVideoLinkButton.disabled = false;
   }
 });
