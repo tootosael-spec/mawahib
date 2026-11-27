@@ -194,22 +194,57 @@ const mediaMessage = document.querySelector("#media-message");
 
 async function loadOwnedTalents() {
   if (!client || !mediaTalentSelect) return;
+  const list = document.querySelector("#my-talents-list");
   mediaTalentSelect.innerHTML = '<option value="">اختر ملف الموهبة</option>';
-  const { data, error } = await client
-    .from("talents")
-    .select("id,title")
-    .order("created_at", { ascending: false });
-  if (error) {
-    mediaMessage.textContent = "تعذر تحميل ملفاتك. أعد تحميل الصفحة.";
+  if (list) list.textContent = "جارٍ تحميل مواهبك...";
+  try {
+    const { data: userData, error: userError } = await client.auth.getUser();
+    if (userError || !userData.user) throw new Error("سجّل الدخول لعرض مواهبك.");
+    const { data, error } = await client
+      .from("talents")
+      .select("id,title,description,status,created_at,talent_categories(name)")
+      .eq("owner_id", userData.user.id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      if (list) list.textContent = "لم تضف أي موهبة حتى الآن.";
+      return;
+    }
+    data.forEach(talent => {
+      const option = document.createElement("option");
+      option.value = talent.id;
+      option.textContent = talent.title;
+      mediaTalentSelect.appendChild(option);
+    });
+
+    if (list) {
+      list.replaceChildren();
+      const statusLabels = {
+        pending: "بانتظار المراجعة",
+        published: "معتمدة ومنشورة",
+        rejected: "تحتاج إلى تعديل",
+        hidden: "مخفية"
+      };
+      data.forEach(talent => {
+        const card = document.createElement("article");
+        card.className = "my-talent-card";
+        const heading = document.createElement("h5");
+        heading.textContent = talent.title;
+        const category = document.createElement("p");
+        category.textContent = talent.talent_categories?.name || "مجال غير محدد";
+        const status = document.createElement("span");
+        status.className = "my-talent-status";
+        status.textContent = statusLabels[talent.status] || "قيد المراجعة";
+        card.append(heading, category, status);
+        list.appendChild(card);
+      });
+    }
+  } catch (error) {
+    if (list) list.textContent = error.message || "تعذر تحميل مواهبك.";
+    mediaMessage.textContent = error.message || "تعذر تحميل ملفاتك.";
     mediaMessage.classList.add("error");
-    return;
   }
-  (data || []).forEach(talent => {
-    const option = document.createElement("option");
-    option.value = talent.id;
-    option.textContent = talent.title;
-    mediaTalentSelect.appendChild(option);
-  });
 }
 
 uploadImageButton?.addEventListener("click", async () => {
