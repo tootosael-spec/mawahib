@@ -137,6 +137,11 @@ async function loadPublishedTalents() {
       });
       data.forEach(item => {
         item.approvedMedia = byTalent.get(item.id) || [];
+        // إذا لم يحدد صاحب الموهبة صورة غلاف مستقلة، استخدم أول صورة معتمدة في الخانة الوردية.
+        if (!item.cover_url) {
+          const firstApprovedImage = item.approvedMedia.find(media => media.media_type === "image" && media.display_url);
+          if (firstApprovedImage) item.cover_url = firstApprovedImage.display_url;
+        }
         item.approvedVideos = item.approvedMedia.filter(media => media.media_type === "video").map(media => media.file_url);
       });
     }
