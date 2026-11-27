@@ -272,7 +272,7 @@ async function renderTalentCommunity(talent, target = detailCommunity, inline = 
   const section = document.createElement("section");
   section.className = "community-section";
   const reactionHeading = document.createElement("h3");
-  reactionHeading.textContent = "شارك رأيك";
+  reactionHeading.textContent = "رأيك يهمنا";
   const reactionRow = document.createElement("div");
   reactionRow.className = "reaction-row";
   const likeButton = document.createElement("button");
@@ -283,8 +283,14 @@ async function renderTalentCommunity(talent, target = detailCommunity, inline = 
   dislikeButton.dataset.communityAction = "dislike";
   const likeCount = document.createElement("span");
   const dislikeCount = document.createElement("span");
-  likeButton.append("👍 إعجاب ", likeCount);
-  dislikeButton.append("👎 عدم إعجاب ", dislikeCount);
+  likeCount.className = dislikeCount.className = "reaction-count";
+  const likeIcon = document.createElement("span");
+  const dislikeIcon = document.createElement("span");
+  likeIcon.className = dislikeIcon.className = "reaction-icon";
+  likeIcon.textContent = "♥";
+  dislikeIcon.textContent = "▾";
+  likeButton.append(likeIcon, document.createTextNode(" إعجاب "), likeCount);
+  dislikeButton.append(dislikeIcon, document.createTextNode(" غير مناسب "), dislikeCount);
   reactionRow.append(likeButton, dislikeButton);
   const status = document.createElement("p");
   status.className = "auth-message";
@@ -361,15 +367,18 @@ async function renderTalentCommunity(talent, target = detailCommunity, inline = 
   commentsToggle.type = "button";
   commentsToggle.className = "comments-toggle";
   commentsToggle.dataset.communityAction = "comments";
-  commentsToggle.textContent = "💬 عرض التعليقات";
+  const commentsCount = document.createElement("span");
+  commentsCount.className = "comments-count";
+  commentsCount.textContent = "0";
+  commentsToggle.append("💬 التعليقات ", commentsCount);
   commentsToggle.addEventListener("click", event => {
     event.stopPropagation();
     commentsPanel.hidden = !commentsPanel.hidden;
-    commentsToggle.textContent = commentsPanel.hidden ? "💬 عرض التعليقات" : "إخفاء التعليقات";
+    commentsToggle.firstChild.textContent = commentsPanel.hidden ? "💬 التعليقات " : "إخفاء التعليقات ";
     if (!commentsPanel.hidden) commentsPanel.scrollIntoView({behavior:"smooth",block:"nearest"});
   });
   const commentsHeading = document.createElement("h3");
-  commentsHeading.textContent = "تعليقات الزوار";
+  commentsHeading.textContent = "آراء المجتمع";
   const commentsList = document.createElement("div");
   commentsList.className = "community-comments";
   const loadComments = async () => {
@@ -379,6 +388,7 @@ async function renderTalentCommunity(talent, target = detailCommunity, inline = 
       .eq("talent_id", talent.id).eq("status", "published")
       .order("created_at", { ascending: false }).limit(50);
     if (error) throw error;
+    commentsCount.textContent = String(data?.length || 0);
     if (!data?.length) {
       const empty = document.createElement("p");
       empty.className = "detail-empty";
