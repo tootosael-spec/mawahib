@@ -354,3 +354,10 @@ body.detail-open{overflow:hidden}
   .talent-community-inline{padding:12px 13px 14px}
   .talent-community-inline .reaction-button{min-height:40px;font-size:11px}
 }
+
+
+/* زر التواصل في رأس شريحة الموهبة */
+.detail-close{left:auto;right:14px}
+.detail-contact-trigger{position:absolute;top:12px;left:14px;border:0;border-radius:9px;padding:9px 15px;background:var(--green);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.detail-contact-trigger:hover{background:var(--ink)}
+.talent-detail-panel>.eyebrow{display:inline-block;margin-top:8px}
