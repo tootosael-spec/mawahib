@@ -33,3 +33,18 @@ create policy "Users remove own dislikes"
 on public.talent_dislikes for delete
 to authenticated
 using ((select auth.uid()) = user_id);
+
+-- Explicit least-privilege grants for the existing community tables.
+alter table public.talent_likes enable row level security;
+revoke all on table public.talent_likes from anon, authenticated;
+grant select on table public.talent_likes to anon, authenticated;
+grant insert, delete on table public.talent_likes to authenticated;
+
+alter table public.talent_comments enable row level security;
+revoke all on table public.talent_comments from anon, authenticated;
+grant select on table public.talent_comments to anon, authenticated;
+grant insert, delete on table public.talent_comments to authenticated;
+
+alter table public.talent_reports enable row level security;
+revoke all on table public.talent_reports from anon, authenticated;
+grant insert on table public.talent_reports to anon, authenticated;
