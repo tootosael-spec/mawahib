@@ -22,6 +22,7 @@ function escapeHtml(value = "") {
 }
 
 function renderTalents(rows) {
+  if (!grid) return;
   grid.innerHTML = (rows || []).map((talent, index) => {
     const category = talent.talent_categories?.name || "مواهب أخرى";
     const shortCategory = categoryAliases[category] || category;
@@ -40,6 +41,7 @@ function renderTalents(rows) {
 }
 
 function applyFilters() {
+  if (!grid) return;
   const term = (search?.value || "").trim().toLowerCase();
   grid.querySelectorAll(".talent-card").forEach(card => {
     const categoryMatch = activeCategory === "الكل" || card.dataset.category === activeCategory;
@@ -54,7 +56,8 @@ filters.forEach(button => button.addEventListener("click", () => {
   applyFilters();
 }));
 search?.addEventListener("input", applyFilters);
-document.querySelector("#year").textContent = new Date().getFullYear();
+const yearElement = document.querySelector("#year");
+if (yearElement) yearElement.textContent = new Date().getFullYear();
 
 const client = window.supabase?.createClient(
   window.MAWAHIB_CONFIG.url,
@@ -62,7 +65,7 @@ const client = window.supabase?.createClient(
 );
 
 async function loadPublishedTalents() {
-  if (!client) return;
+  if (!client || !grid) return;
   const { data, error } = await client
     .from("talents")
     .select("id,title,description,cover_url,created_at,talent_categories(name)")
@@ -83,11 +86,13 @@ const emailInput = document.querySelector("#auth-email");
 const passwordInput = document.querySelector("#auth-password");
 
 function showMessage(text, isError = false) {
+  if (!message) return;
   message.textContent = text;
   message.classList.toggle("error", isError);
 }
 
 function showAccount(user) {
+  if (!formWrap || !accountState) return;
   if (!user) {
     formWrap.hidden = false;
     accountState.hidden = true;
@@ -109,6 +114,7 @@ function showAccount(user) {
 }
 
 async function refreshSession() {
+  if (!formWrap || !accountState) return;
   if (!client) {
     showMessage("تعذر تحميل خدمة الحسابات. أعد تحميل الصفحة.", true);
     return;
@@ -357,7 +363,9 @@ document.querySelector("#logout-button")?.addEventListener("click", async () => 
   showMessage("تم تسجيل الخروج.");
 });
 
-client?.auth.onAuthStateChange((_event, session) => showAccount(session?.user || null));
+if (formWrap && accountState) {
+  client?.auth.onAuthStateChange((_event, session) => showAccount(session?.user || null));
+}
 loadPublishedTalents();
 loadTalentCategories();
 refreshSession();
