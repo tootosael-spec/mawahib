@@ -468,6 +468,7 @@ document.querySelector("#logout-button")?.addEventListener("click", async () => 
 if (formWrap && accountState) {
   client?.auth.onAuthStateChange((_event, session) => showAccount(session?.user || null));
 }
+renderTalents([]);
 loadPublishedTalents();
 loadTalentCategories();
 refreshSession();
