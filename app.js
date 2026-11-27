@@ -47,7 +47,6 @@ function renderTalents(rows) {
         <button type="button" data-community-action="like" aria-label="إعجاب">👍 <span>إعجاب</span></button>
         <button type="button" data-community-action="dislike" aria-label="عدم إعجاب">👎 <span>عدم إعجاب</span></button>
         <button type="button" data-community-action="comments" aria-label="التعليقات">💬 <span>تعليق</span></button>
-        <button type="button" data-community-action="report" aria-label="الإبلاغ">🚩 <span>إبلاغ</span></button>
       </div>
     </article>`;
   }).join("");
@@ -453,7 +452,6 @@ grid?.addEventListener("click", event => {
       const community = document.querySelector("#detail-community");
       community?.scrollIntoView({ behavior: "smooth", block: "start" });
       const action = actionButton.dataset.communityAction;
-      if (action === "report") document.querySelector(".report-toggle")?.click();
       if (action === "comments") document.querySelector("#detail-community textarea")?.focus();
       if (action === "like") document.querySelector(".reaction-button")?.focus();
       if (action === "dislike") document.querySelectorAll(".reaction-button")[1]?.focus();
