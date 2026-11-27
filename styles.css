@@ -420,3 +420,31 @@ body.comments-modal-open{overflow:hidden}
 .community-comments-dialog textarea:focus{outline:2px solid #dcebd7;border-color:#8eae8c;background:#fff}
 .community-comments-dialog .button{width:100%;min-height:42px;margin-top:4px;border-radius:11px;font-size:13px;font-weight:700}
 .community-comments-dialog .auth-message{font-size:12px}
+
+
+/* منع تظليل بطاقة الموهبة بالكامل عند الضغط على أزرار التفاعل */
+.talent-card{
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.talent-community-inline,
+.talent-community-inline *{
+  -webkit-tap-highlight-color:transparent;
+}
+.talent-community-inline .reaction-button,
+.talent-community-inline .comments-toggle{
+  -webkit-user-select:none;
+  user-select:none;
+  outline:none;
+}
+.talent-community-inline .reaction-button:focus,
+.talent-community-inline .reaction-button:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 2px #dcebd7;
+}
+.talent-community-inline textarea,
+.talent-community-inline input{
+  -webkit-user-select:text;
+  user-select:text;
+}
