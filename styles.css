@@ -403,3 +403,12 @@ body.comments-modal-open{overflow:hidden}
   .community-comments-dialog{max-height:82vh;border-radius:16px}
   .community-comments-dialog .community-comments-panel{padding:13px}
 }
+
+.community-comments-dialog textarea{
+  display:block;width:100%;min-height:88px;margin:12px 0;
+  padding:12px;border:1px solid #e0e8dc;border-radius:12px;
+  background:#fbfcfa;font:inherit;font-size:13px;line-height:1.7;
+}
+.community-comments-dialog textarea:focus{outline:2px solid #dcebd7;border-color:#8eae8c;background:#fff}
+.community-comments-dialog .button{width:100%;min-height:42px;margin-top:4px;border-radius:11px;font-size:13px;font-weight:700}
+.community-comments-dialog .auth-message{font-size:12px}
