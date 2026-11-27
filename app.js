@@ -493,6 +493,7 @@ grid?.addEventListener("click", event => {
 });
 grid?.addEventListener("keydown", event => {
   if (event.key !== "Enter" && event.key !== " ") return;
+  if (event.target.closest(".talent-community-inline")) return;
   const card = event.target.closest(".talent-card");
   if (card) {
     event.preventDefault();
