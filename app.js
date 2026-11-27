@@ -67,8 +67,43 @@ function renderTalents(rows) {
   applyFilters();
   grid.querySelectorAll(".talent-gallery").forEach(gallery => {
     const strip = gallery.querySelector(".talent-media-strip");
-    gallery.querySelector(".talent-gallery-prev")?.addEventListener("click", () => strip.scrollBy({ left: strip.clientWidth, behavior: "smooth" }));
-    gallery.querySelector(".talent-gallery-next")?.addEventListener("click", () => strip.scrollBy({ left: -strip.clientWidth, behavior: "smooth" }));
+    const items = [...strip.querySelectorAll(".talent-media-item")];
+    const previous = gallery.querySelector(".talent-gallery-prev");
+    const next = gallery.querySelector(".talent-gallery-next");
+    if (!strip || !items.length) return;
+    let currentIndex = 0;
+    const updateArrows = () => {
+      previous.disabled = currentIndex <= 0;
+      next.disabled = currentIndex >= items.length - 1;
+      previous.setAttribute("aria-disabled", String(previous.disabled));
+      next.setAttribute("aria-disabled", String(next.disabled));
+    };
+    const goTo = index => {
+      currentIndex = Math.max(0, Math.min(items.length - 1, index));
+      items[currentIndex].scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      strip.querySelectorAll("video").forEach(video => {
+        if (!items[currentIndex].contains(video)) video.pause();
+      });
+      updateArrows();
+    };
+    previous.addEventListener("click", () => goTo(currentIndex - 1));
+    next.addEventListener("click", () => goTo(currentIndex + 1));
+    let scrollTimer;
+    strip.addEventListener("scroll", () => {
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        const center = strip.getBoundingClientRect().left + strip.clientWidth / 2;
+        let nearest = 0, distance = Infinity;
+        items.forEach((item, index) => {
+          const rect = item.getBoundingClientRect();
+          const d = Math.abs((rect.left + rect.width / 2) - center);
+          if (d < distance) { distance = d; nearest = index; }
+        });
+        currentIndex = nearest;
+        updateArrows();
+      }, 90);
+    }, { passive: true });
+    updateArrows();
   });
   displayRows.forEach(talent => {
     if (talent.isDemo) return;
