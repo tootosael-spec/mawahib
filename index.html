@@ -1,6 +1,36 @@
 <!doctype html>
-<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#142a27"><meta name="description" content="مواهب — موهبتك تستحق أن تُشاهَد"><title>مواهب | موهبتك تستحق أن تُشاهَد</title><link rel="stylesheet" href="styles.css"></head><body>
-<header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">م</span><span>مواهب</span></a><nav><a href="talents.html">اكتشف المواهب</a><a href="about.html">عن المنصة</a></nav><a class="button button-outline" href="account.html">حسابي</a></header>
-<main><section class="hero" id="home"><div class="hero-copy"><span class="eyebrow">مساحة لكل موهبة</span><h1>موهبتك تستحق<br><em>أن تُشاهَد.</em></h1><p>اكتشف مواهب ملهمة، وشارك العالم ما تتقنه. هنا تبدأ حكاية موهبتك.</p><div class="hero-actions"><a class="button" href="account.html">ابدأ بعرض موهبتك</a><a class="text-link" href="talents.html">تصفّح المواهب ←</a></div><div class="hero-note"><span class="pulse"></span> منصة لاكتشاف الإبداع ومشاركته</div></div><div class="hero-art" aria-label="رسوم فنية تجريدية"><div class="art-circle"></div><div class="art-card art-card-one">✦<small>إبداع</small></div><div class="art-card art-card-two">✳<small>شغف</small></div><div class="art-caption">كل موهبة<br>لها حكاية</div></div></section>
-<section class="join-section"><div><span class="eyebrow">حان وقت الظهور</span><h2>عندك موهبة؟<br>خلّ العالم يشوفها.</h2><p>أنشئ ملفاً لموهبتك وشارك أعمالك بعد مراجعتها واعتمادها.</p></div><a class="button button-light" href="account.html">أنشئ حسابك</a></section></main>
-<footer><a class="brand" href="index.html"><span class="brand-mark">م</span><span>مواهب</span></a><span>© <span id="year"></span> مواهب — موهبتك تستحق أن تُشاهَد</span></footer><script>document.querySelector("#year").textContent=new Date().getFullYear()</script></body></html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#142a27"><meta name="description" content="مواهب — اكتشف المواهب وشاهد إبداعات أصحابها">
+<title>مواهب | موهبتك تستحق أن تُشاهَد</title><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+<a class="brand" href="index.html"><span class="brand-mark">م</span><span>مواهب</span></a>
+<nav><a href="#talents">المواهب المعروضة</a><a href="#join">سجّل موهبتك</a></nav>
+<a class="button button-outline" href="account.html">موهبتي</a>
+</header>
+<main>
+<section class="hero" id="home">
+<div class="hero-copy"><span class="eyebrow">مساحة لكل موهبة</span>
+<h1>موهبتك تستحق<br><em>أن تُشاهَد.</em></h1>
+<p>اكتشف مواهب ملهمة، وشاهد إبداعات أصحابها. أو شاركنا موهبتك ودع العالم يتعرف عليك.</p>
+<div class="hero-actions"><a class="button" href="account.html">سجّل موهبتك</a><a class="text-link" href="#talents">شاهد المواهب المعروضة ↓</a></div>
+<div class="hero-note"><span class="pulse"></span> تصفّح المواهب مباشرة دون تسجيل</div></div>
+<div class="hero-art" aria-label="رسوم فنية تجريدية"><div class="art-circle"></div><div class="art-card art-card-one">✦<small>إبداع</small></div><div class="art-card art-card-two">✳<small>شغف</small></div><div class="art-caption">كل موهبة<br>لها حكاية</div></div>
+</section>
+<section class="section" id="talents">
+<div class="section-heading"><div><span class="eyebrow">اكتشف الإبداع</span><h2>المواهب المعروضة</h2><p>تصفّح الأعمال والمواهب التي تم اعتمادها ونشرها.</p></div>
+<label class="search"><span>⌕</span><input id="search" type="search" placeholder="ابحث عن موهبة أو مجال..." aria-label="ابحث عن موهبة"></label></div>
+<div class="filters" id="filters">
+<button class="filter active" data-category="الكل">الكل</button><button class="filter" data-category="الفنون">الفنون</button><button class="filter" data-category="الأداء الصوتي">الأداء الصوتي</button><button class="filter" data-category="الرياضة">الرياضة</button><button class="filter" data-category="التصوير">التصوير</button><button class="filter" data-category="الابتكار">الابتكار</button><button class="filter" data-category="الحرف">الحرف</button>
+</div>
+<div class="talent-grid" id="talentGrid" aria-live="polite"></div>
+<p class="demo-note">لا توجد مواهب منشورة حالياً. كن أول من يشارك موهبته.</p>
+</section>
+<section class="join-section" id="join"><div><span class="eyebrow">حان وقت الظهور</span><h2>عندك موهبة؟<br>خلّ العالم يشوفها.</h2><p>سجّل حسابك، وأنشئ صفحة موهبتك، وأضف صورك وفيديوهاتك. بعد مراجعة أعمالك واعتمادها ستظهر للزوار هنا في الرئيسية.</p></div><a class="button button-light" href="account.html">سجّل موهبتك</a></section>
+</main>
+<footer><a class="brand" href="index.html"><span class="brand-mark">م</span><span>مواهب</span></a><span>© <span id="year"></span> مواهب — موهبتك تستحق أن تُشاهَد</span></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="app.js"></script>
+</body></html>
