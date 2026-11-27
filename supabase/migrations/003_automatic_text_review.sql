@@ -44,3 +44,19 @@ for each row
 execute function public.auto_review_talent_text();
 
 revoke all on function public.auto_review_talent_text() from public, anon, authenticated;
+
+-- Apply the same first-pass rules to profiles already waiting for review.
+update public.talents
+set status = case
+  when
+    char_length(trim(coalesce(title, ''))) < 3
+    or char_length(trim(coalesce(description, ''))) < 15
+    or char_length(coalesce(title, '')) > 120
+    or char_length(coalesce(description, '')) > 2000
+    or (coalesce(title, '') || ' ' || coalesce(description, '')) ~* '(https?://|www\\.|[[:alnum:]_.%+-]+@[[:alnum:].-]+\\.[[:alpha:]]{2,})'
+    or (coalesce(title, '') || ' ' || coalesce(description, '')) ~ '([0-9٠-٩]{8,})'
+    or (coalesce(title, '') || ' ' || coalesce(description, '')) ~* '(اباحي|إباحي|جنسي|عاري|عري|تحرش|استغلال جنسي|مخدرات|حشيش|كوكايين|هيروين|ابتزاز|تهديد|قنبلة|مسدس|سلاح ناري|porn|xxx|nude|sexual|cocaine|heroin|weapon|bomb|blackmail)'
+  then 'pending'
+  else 'published'
+end
+where status = 'pending';
