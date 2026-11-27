@@ -36,13 +36,10 @@ function renderTalents(rows) {
     const shortCategory = categoryAliases[category] || category;
     const palettes = ["art-pink", "art-blue", "art-gold", "art-green"];
     const symbols = ["✿", "◉", "♫", "✧"];
-    const artwork = talent.cover_url
-      ? `<img src="${escapeHtml(talent.cover_url)}" alt="" loading="lazy">`
-      : `<span>${symbols[index % symbols.length]}</span><small>${escapeHtml(category)}</small>`;
+    // الصور المعتمدة تظهر في شريط أفقي واحد؛ لا نعرض صورة الغلاف الكبيرة أعلى البطاقة.
     const sampleLabel = talent.isDemo ? '<span class="sample-label">نموذج تجريبي</span>' : "";
     const mediaItems = [
-      ...(talent.cover_url ? [{ media_type: "image", display_url: talent.cover_url, caption: "" }] : []),
-      ...(talent.approvedMedia || []).filter(media => media.media_type === "image" && media.display_url !== talent.cover_url),
+      ...(talent.approvedMedia || []).filter(media => media.media_type === "image" && media.display_url && media.display_url !== talent.cover_url),
       ...(talent.approvedMedia || []).filter(media => media.media_type === "video")
     ];
     const mediaStrip = mediaItems.length ? `<div class="talent-media-strip" aria-label="صور وفيديوهات الموهبة">
@@ -56,7 +53,6 @@ function renderTalents(rows) {
     const contactButton = !talent.isDemo && talent.owner_id ? `<button class="talent-card-contact" type="button" data-contact-talent="${escapeHtml(talent.id)}">تواصل معي</button>` : "";
     return `<article class="talent-card" data-talent-id="${escapeHtml(talent.id)}" data-category="${escapeHtml(shortCategory)}" data-name="${escapeHtml(talent.title)}">
       <div class="talent-card-toolbar">${contactButton}</div>
-      <div class="talent-art ${palettes[index % palettes.length]}">${artwork}${sampleLabel}</div>
       ${mediaStrip}
       <div class="talent-info"><div><h3>${escapeHtml(talent.title)}</h3><p>${escapeHtml(talent.description || "موهبة تستحق المشاهدة")}</p></div><span class="talent-icon">✦</span></div>
       <div class="talent-contact-inline" hidden></div>
