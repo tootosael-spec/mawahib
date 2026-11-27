@@ -460,27 +460,28 @@ body.comments-modal-open{overflow:hidden}
 
 /* شريط أفقي لأعمال الموهبة داخل البطاقة */
 .talent-media-strip{
-  display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;
+  display:flex;align-items:stretch;gap:10px;overflow-x:auto;overflow-y:hidden;
   padding:12px 14px 14px;direction:rtl;
-  scroll-snap-type:x proximity;overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;overscroll-behavior-x:contain;
   -webkit-overflow-scrolling:touch;touch-action:pan-x;
   scrollbar-width:thin;
 }
 .talent-media-item{
-  flex:0 0 230px;min-width:0;max-width:230px;
+  box-sizing:border-box;flex:0 0 100%;width:100%;min-width:0;max-width:none;
   margin:0;display:flex;flex-direction:column;gap:7px;
   padding:9px;border:1px solid var(--line);border-radius:14px;
   background:#fff;color:var(--ink);text-decoration:none;
   scroll-snap-align:start;overflow:hidden;
 }
 .talent-media-item img{
-  display:block;width:100%;height:205px;object-fit:cover;border-radius:9px;
+  display:block;width:100%;height:290px;flex:1 1 auto;min-height:220px;
+  object-fit:cover;border-radius:9px;
 }
 .talent-media-caption{
   margin:0;color:var(--muted);font-size:11px;line-height:1.6;
   white-space:normal;overflow-wrap:anywhere;
 }
-.talent-video-item{justify-content:center;align-items:center;min-height:176px;background:#f3f7f1;text-align:center}
+.talent-video-item{box-sizing:border-box;justify-content:center;align-items:center;min-height:310px;background:#f3f7f1;text-align:center}
 .talent-video-play{
   display:grid;place-items:center;width:48px;height:48px;
   border-radius:50%;background:var(--green);color:#fff;font-size:18px;
