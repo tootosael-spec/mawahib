@@ -264,7 +264,7 @@ async function renderTalentCommunity(talent, target = detailCommunity, inline = 
     const note = document.createElement("p");
     note.className = "detail-empty";
     note.textContent = "التفاعل والتعليقات متاحة على ملفات المواهب المنشورة فقط.";
-    detailCommunity.appendChild(note);
+    target.appendChild(note);
     return;
   }
 
