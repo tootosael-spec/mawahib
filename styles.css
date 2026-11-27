@@ -663,3 +663,90 @@ body.comments-modal-open{overflow:hidden}
   border-color:var(--ink);
   color:#fff;
 }
+
+
+/* لوحة موهبتي — تصميم موحد ومتجاوب */
+.account-dashboard{
+  grid-template-columns:minmax(230px,.72fr) minmax(0,1.55fr);
+  align-items:start;
+  gap:34px;
+  padding:48px max(5vw,18px);
+  background:
+    radial-gradient(ellipse at 12% 8%,rgba(207,224,190,.42),transparent 34%),
+    linear-gradient(135deg,#f4f6ef 0%,#fafbf8 58%,#eef3e9 100%);
+}
+.account-welcome{position:sticky;top:22px;padding:30px 24px}
+.account-welcome h2{font-size:clamp(28px,4vw,40px);line-height:1.35;color:var(--ink)}
+.account-welcome>p{font-size:15px;line-height:2.1}
+.account-welcome-note{
+  display:flex;align-items:center;gap:12px;margin-top:28px;padding:16px;
+  border:1px solid #dce7d5;border-radius:16px;background:#f1f6ed;color:#315c3d
+}
+.account-welcome-note>span{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#dfead8;font-size:20px}
+.account-welcome-note strong,.account-welcome-note small{display:block}
+.account-welcome-note strong{font-size:13px}
+.account-welcome-note small{margin-top:4px;font-size:11px;line-height:1.7;color:#637563}
+.account-panel{
+  min-width:0;padding:clamp(18px,3vw,30px);
+  border:1px solid #e5eae1;border-radius:24px;
+  box-shadow:0 18px 55px rgba(28,48,35,.07)
+}
+.account-profile-head{display:flex;align-items:center;gap:14px;padding-bottom:20px;border-bottom:1px solid #edf0e9}
+.account-avatar{display:grid;place-items:center;flex:0 0 54px;height:54px;border-radius:17px;background:linear-gradient(145deg,#24483d,#52775c);color:#fff;font-size:24px;font-weight:800}
+.account-kicker{font-size:11px;color:#829083}
+#account-state .account-profile-head h3{margin:3px 0 2px;font-size:22px;color:var(--ink)}
+#account-state .account-profile-head p{margin:0;font-size:12px;color:#8b958b}
+#account-state .account-verification-note{
+  margin:14px 0 20px;padding:11px 14px;border-radius:12px;
+  background:#f3f7ef;border:1px solid #e5edde;color:#50674f;
+  font-size:12px;line-height:1.8;direction:rtl;text-align:right
+}
+.account-section-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.account-section-card{
+  min-width:0;margin:0;padding:19px;border:1px solid #e8ece5;
+  border-radius:17px;background:#fff;box-shadow:0 4px 15px rgba(30,48,35,.035)
+}
+.account-section-heading{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.account-section-heading>div{min-width:0}
+.account-section-icon{display:grid;place-items:center;flex:0 0 38px;height:38px;border-radius:12px;background:#edf4e9;color:#456b49;font-size:19px}
+.account-section-heading h4{margin:0!important;font-size:16px!important;color:var(--ink)}
+.account-section-heading p{margin:3px 0 0!important;font-size:11px!important;line-height:1.6;color:#899388!important}
+.account-section-card .form-hint{font-size:11px;line-height:1.8}
+.account-section-card label{margin-top:13px}
+.account-section-card input,.account-section-card select,.account-section-card textarea{
+  border-color:#e2e8df;border-radius:11px;background:#fcfdfb;min-height:45px
+}
+.account-section-card input:focus,.account-section-card select:focus,.account-section-card textarea:focus{
+  outline:2px solid #dce9d6; border-color:#91ad89
+}
+.account-section-card .button{width:100%;min-height:44px;border-radius:11px}
+#messages-wrap{grid-column:1/-1}
+#my-talents-wrap{grid-column:1/-1}
+#my-talents-list,.conversations-list{gap:10px}
+.my-talent-card{padding:14px 16px;border:1px solid #e8ede5;border-radius:13px;background:#fbfcfa}
+.my-talent-card h5{margin:0 0 5px;font-size:15px}
+.my-talent-card p{margin:0 0 8px;font-size:12px}
+.my-talent-status{display:inline-flex;padding:5px 10px;border-radius:20px;background:#edf4e9;color:#466a46;font-size:11px}
+.conversation-list-item{padding:14px;border-radius:12px;background:#fbfcfa}
+.conversation-view{padding:16px;border:1px solid #e8ede5;border-radius:14px;background:#fbfcfa}
+.account-logout{margin-top:20px;min-height:44px;border-radius:11px}
+#auth-form-wrap{max-width:540px;margin:auto}
+#auth-form-wrap h3{font-size:23px}
+#auth-form-wrap .form-hint{line-height:1.9;color:#7d897d}
+@media(max-width:900px){
+ .account-dashboard{grid-template-columns:1fr;gap:16px;padding:26px 14px}
+ .account-welcome{position:static;padding:12px 8px 4px}
+ .account-welcome-note{margin-top:16px}
+ .account-panel{border-radius:20px}
+}
+@media(max-width:600px){
+ .account-dashboard{padding:18px 10px}
+ .account-panel{padding:16px 12px}
+ .account-section-grid{grid-template-columns:1fr;gap:12px}
+ .account-section-card,#messages-wrap,#my-talents-wrap{grid-column:1}
+ .account-section-card{padding:16px}
+ .account-profile-head{gap:11px}
+ .account-avatar{flex-basis:46px;height:46px;border-radius:14px}
+ #account-state .account-profile-head h3{font-size:18px}
+ .account-welcome h2{font-size:27px}
+}
