@@ -516,3 +516,27 @@ body.comments-modal-open{overflow:hidden}
   .talent-detail-panel{padding:0 16px 20px}
   .talent-detail-toolbar{margin:0 -16px 15px;padding:10px 14px}
 }
+
+/* رأس بطاقة الموهبة: زر التواصل ثابت خارج شريط الوسائط */
+.talent-card-toolbar{
+  position:sticky;top:0;z-index:8;
+  display:flex;justify-content:flex-start;align-items:center;
+  min-height:54px;padding:8px 14px;
+  background:#fff;border-bottom:1px solid var(--line);
+  border-radius:18px 18px 0 0;
+}
+.talent-card-contact{
+  min-height:38px;padding:8px 17px;border:0;border-radius:10px;
+  background:var(--green);color:#fff;font:inherit;font-size:13px;font-weight:700;
+  cursor:pointer;touch-action:manipulation;
+}
+.talent-card-contact:active{transform:scale(.98)}
+.talent-contact-inline{
+  padding:14px 16px;background:#fff;border-top:1px solid var(--line);
+}
+.talent-contact-inline[hidden]{display:none!important}
+.talent-contact-inline .detail-contact{margin:0;padding:0;border:0}
+.talent-contact-inline .detail-contact h3{font-size:15px}
+.talent-contact-inline .detail-contact textarea{font:inherit}
+.talent-card{cursor:default}
+.talent-card:focus-visible{outline:none}
