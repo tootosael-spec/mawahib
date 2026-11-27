@@ -43,6 +43,12 @@ function renderTalents(rows) {
     return `<article class="talent-card" data-talent-id="${escapeHtml(talent.id)}" data-category="${escapeHtml(shortCategory)}" data-name="${escapeHtml(talent.title)}" tabindex="0" role="button" aria-label="عرض موهبة ${escapeHtml(talent.title)}">
       <div class="talent-art ${palettes[index % palettes.length]}">${artwork}${sampleLabel}</div>
       <div class="talent-info"><div><h3>${escapeHtml(talent.title)}</h3><p>${escapeHtml(talent.description || "موهبة تستحق المشاهدة")}</p></div><span class="talent-icon">✦</span></div>
+      <div class="talent-card-actions" aria-label="تفاعلات الموهبة">
+        <button type="button" data-community-action="like" aria-label="إعجاب">👍 <span>إعجاب</span></button>
+        <button type="button" data-community-action="dislike" aria-label="عدم إعجاب">👎 <span>عدم إعجاب</span></button>
+        <button type="button" data-community-action="comments" aria-label="التعليقات">💬 <span>تعليق</span></button>
+        <button type="button" data-community-action="report" aria-label="الإبلاغ">🚩 <span>إبلاغ</span></button>
+      </div>
     </article>`;
   }).join("");
   if (demoNote) demoNote.hidden = false;
@@ -472,7 +478,20 @@ function closeTalentDetail() {
 
 grid?.addEventListener("click", event => {
   const card = event.target.closest(".talent-card");
-  if (card) showTalentDetail(card.dataset.talentId);
+  if (!card) return;
+  const actionButton = event.target.closest("[data-community-action]");
+  showTalentDetail(card.dataset.talentId);
+  if (actionButton) {
+    setTimeout(() => {
+      const community = document.querySelector("#detail-community");
+      community?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const action = actionButton.dataset.communityAction;
+      if (action === "report") document.querySelector(".report-toggle")?.click();
+      if (action === "comments") document.querySelector("#detail-community textarea")?.focus();
+      if (action === "like") document.querySelector(".reaction-button")?.focus();
+      if (action === "dislike") document.querySelectorAll(".reaction-button")[1]?.focus();
+    }, 50);
+  }
 });
 grid?.addEventListener("keydown", event => {
   if (event.key !== "Enter" && event.key !== " ") return;
