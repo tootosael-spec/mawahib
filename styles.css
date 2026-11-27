@@ -393,13 +393,15 @@ body.comments-modal-open{overflow:hidden}
   background:#edf2e9;color:var(--ink);font-size:25px;line-height:1;cursor:pointer;
 }
 .community-comments-dialog .community-comments-panel{
-  display:block!important;flex:1;min-height:0;overflow-y:auto;
-  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
-  padding:16px;background:#fff;
+  display:flex!important;flex:1;min-height:0;flex-direction:column;
+  overflow:hidden;padding:16px;background:#fff;
 }
 .community-comments-dialog .community-comments-panel h3{display:none}
 .community-comments-dialog .community-comments{
-  max-height:none;overflow:visible;
+  flex:0 1 110px;min-height:0;max-height:110px;
+  overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding:0 3px 0 0;
 }
 @media(max-width:600px){
   .community-comments-modal{padding:14px}
