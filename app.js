@@ -286,40 +286,66 @@ async function renderTalentCommunity(talent) {
   status.className = "auth-message";
 
   const refreshReactions = async () => {
-    const [likes, dislikes] = await Promise.all([
+    const [likes, dislikes, myLike, myDislike] = await Promise.all([
       client.from("talent_likes").select("id", { count: "exact", head: true }).eq("talent_id", talent.id),
-      client.from("talent_dislikes").select("id", { count: "exact", head: true }).eq("talent_id", talent.id)
+      client.from("talent_dislikes").select("id", { count: "exact", head: true }).eq("talent_id", talent.id),
+      client.from("talent_likes").select("id").eq("talent_id", talent.id).eq("visitor_id", visitorId).maybeSingle(),
+      client.from("talent_dislikes").select("id").eq("talent_id", talent.id).eq("visitor_id", visitorId).maybeSingle()
     ]);
-    if (likes.error || dislikes.error) throw likes.error || dislikes.error;
+    if (likes.error || dislikes.error || myLike.error || myDislike.error) {
+      throw likes.error || dislikes.error || myLike.error || myDislike.error;
+    }
     likeCount.textContent = String(likes.count || 0);
     dislikeCount.textContent = String(dislikes.count || 0);
+    likeButton.classList.toggle("selected", Boolean(myLike.data));
+    dislikeButton.classList.toggle("selected", Boolean(myDislike.data));
   };
 
   const setReaction = async (kind) => {
     const button = kind === "like" ? likeButton : dislikeButton;
+    const oppositeTable = kind === "like" ? "talent_dislikes" : "talent_likes";
+    const table = kind === "like" ? "talent_likes" : "talent_dislikes";
     button.disabled = true;
+    likeButton.disabled = true;
+    dislikeButton.disabled = true;
     try {
-      const table = kind === "like" ? "talent_likes" : "talent_dislikes";
-      const { error } = await client.from(table).insert({
-        talent_id: talent.id,
-        visitor_id: visitorId,
-        user_id: null
-      });
-      if (error && error.code === "23505") {
-        status.textContent = "سبق وسجلت هذا التفاعل من هذا الجهاز.";
-      } else if (error) {
-        throw error;
-      } else {
-        status.classList.remove("error");
-        status.textContent = "شكراً لمشاركتك رأيك.";
-        button.classList.add("selected");
+      const [current, opposite] = await Promise.all([
+        client.from(table).select("id").eq("talent_id", talent.id).eq("visitor_id", visitorId).maybeSingle(),
+        client.from(oppositeTable).select("id").eq("talent_id", talent.id).eq("visitor_id", visitorId).maybeSingle()
+      ]);
+      if (current.error || opposite.error) throw current.error || opposite.error;
+
+      if (opposite.data) {
+        const { error } = await client.from(oppositeTable).delete()
+          .eq("talent_id", talent.id).eq("visitor_id", visitorId);
+        if (error) throw error;
       }
+
+      if (current.data && !opposite.data) {
+        const { error } = await client.from(table).delete()
+          .eq("talent_id", talent.id).eq("visitor_id", visitorId);
+        if (error) throw error;
+        status.textContent = "تم إلغاء تفاعلك.";
+      } else if (!current.data) {
+        const { error } = await client.from(table).insert({
+          talent_id: talent.id,
+          visitor_id: visitorId,
+          user_id: null
+        });
+        if (error) throw error;
+        status.textContent = "شكراً لمشاركتك رأيك.";
+      } else {
+        status.textContent = "تم تحديث تفاعلك.";
+      }
+      status.classList.remove("error");
       await refreshReactions();
     } catch (error) {
       status.textContent = error.message || "تعذر تسجيل تفاعلك.";
       status.classList.add("error");
     } finally {
       button.disabled = false;
+      likeButton.disabled = false;
+      dislikeButton.disabled = false;
     }
   };
   likeButton.addEventListener("click", () => setReaction("like"));
