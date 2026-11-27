@@ -95,6 +95,7 @@ function showAccount(user) {
   }
   formWrap.hidden = true;
   accountState.hidden = false;
+  loadOwnedTalents();
   document.querySelector("#account-heading").textContent =
     `أهلاً بك ${user.user_metadata?.display_name || ""} في مواهب`;
   document.querySelector("#account-email").textContent = user.email || "";
@@ -181,6 +182,97 @@ createTalentButton?.addEventListener("click", async () => {
     talentMessage.classList.add("error");
   } finally {
     createTalentButton.disabled = false;
+  }
+});
+
+const mediaTalentSelect = document.querySelector("#media-talent-select");
+const imageFileInput = document.querySelector("#talent-image-file");
+const uploadImageButton = document.querySelector("#upload-image-button");
+const mediaMessage = document.querySelector("#media-message");
+
+async function loadOwnedTalents() {
+  if (!client || !mediaTalentSelect) return;
+  mediaTalentSelect.innerHTML = '<option value="">اختر ملف الموهبة</option>';
+  const { data, error } = await client
+    .from("talents")
+    .select("id,title")
+    .order("created_at", { ascending: false });
+  if (error) {
+    mediaMessage.textContent = "تعذر تحميل ملفاتك. أعد تحميل الصفحة.";
+    mediaMessage.classList.add("error");
+    return;
+  }
+  (data || []).forEach(talent => {
+    const option = document.createElement("option");
+    option.value = talent.id;
+    option.textContent = talent.title;
+    mediaTalentSelect.appendChild(option);
+  });
+}
+
+uploadImageButton?.addEventListener("click", async () => {
+  if (!client) return;
+  const talentId = mediaTalentSelect?.value;
+  const file = imageFileInput?.files?.[0];
+  mediaMessage.classList.remove("error");
+  if (!talentId) {
+    mediaMessage.textContent = "اختر ملف الموهبة أولاً.";
+    mediaMessage.classList.add("error");
+    return;
+  }
+  if (!file) {
+    mediaMessage.textContent = "اختر صورة من جهازك أولاً.";
+    mediaMessage.classList.add("error");
+    return;
+  }
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowedTypes.includes(file.type)) {
+    mediaMessage.textContent = "الصيغ المسموحة: JPG أو PNG أو WEBP فقط.";
+    mediaMessage.classList.add("error");
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    mediaMessage.textContent = "حجم الصورة أكبر من 5 ميجابايت.";
+    mediaMessage.classList.add("error");
+    return;
+  }
+
+  uploadImageButton.disabled = true;
+  mediaMessage.textContent = "جارٍ رفع الصورة...";
+  let uploadedPath = "";
+  try {
+    const { data: userData, error: userError } = await client.auth.getUser();
+    if (userError || !userData.user) throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
+    const extension = file.type === "image/jpeg" ? "jpg" : file.type === "image/png" ? "png" : "webp";
+    uploadedPath = userData.user.id + "/" + talentId + "/" + crypto.randomUUID() + "." + extension;
+    const { error: uploadError } = await client.storage
+      .from("talent-media")
+      .upload(uploadedPath, file, {
+        cacheControl: "3600",
+        contentType: file.type,
+        upsert: false
+      });
+    if (uploadError) throw uploadError;
+
+    const { error: recordError } = await client.from("talent_media").insert({
+      talent_id: talentId,
+      owner_id: userData.user.id,
+      media_type: "image",
+      file_url: uploadedPath,
+      scan_status: "pending"
+    });
+    if (recordError) {
+      await client.storage.from("talent-media").remove([uploadedPath]);
+      uploadedPath = "";
+      throw recordError;
+    }
+    imageFileInput.value = "";
+    mediaMessage.textContent = "تم رفع الصورة بنجاح وإرسالها للمراجعة. لن تظهر للزوار إلا بعد اعتمادها.";
+  } catch (error) {
+    mediaMessage.textContent = error.message || "تعذر رفع الصورة. حاول مرة أخرى.";
+    mediaMessage.classList.add("error");
+  } finally {
+    uploadImageButton.disabled = false;
   }
 });
 
