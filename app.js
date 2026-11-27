@@ -40,8 +40,22 @@ function renderTalents(rows) {
       ? `<img src="${escapeHtml(talent.cover_url)}" alt="" loading="lazy">`
       : `<span>${symbols[index % symbols.length]}</span><small>${escapeHtml(category)}</small>`;
     const sampleLabel = talent.isDemo ? '<span class="sample-label">نموذج تجريبي</span>' : "";
+    const mediaItems = [
+      ...(talent.cover_url ? [{ media_type: "image", display_url: talent.cover_url, caption: "" }] : []),
+      ...(talent.approvedMedia || []).filter(media => media.media_type === "image" && media.display_url !== talent.cover_url),
+      ...(talent.approvedMedia || []).filter(media => media.media_type === "video")
+    ];
+    const mediaStrip = mediaItems.length ? `<div class="talent-media-strip" aria-label="صور وفيديوهات الموهبة">
+      ${mediaItems.map((media, mediaIndex) => {
+        const caption = media.caption ? `<p class="talent-media-caption">${escapeHtml(media.caption)}</p>` : "";
+        return media.media_type === "image"
+          ? `<figure class="talent-media-item"><img src="${escapeHtml(media.display_url)}" alt="عمل ${mediaIndex + 1}" loading="lazy">${caption}</figure>`
+          : `<a class="talent-media-item talent-video-item" href="${escapeHtml(media.file_url)}" target="_blank" rel="noopener noreferrer"><span class="talent-video-play">▶</span><strong>مشاهدة الفيديو ${mediaIndex + 1}</strong>${caption}</a>`;
+      }).join("")}
+    </div>` : "";
     return `<article class="talent-card" data-talent-id="${escapeHtml(talent.id)}" data-category="${escapeHtml(shortCategory)}" data-name="${escapeHtml(talent.title)}" tabindex="0" role="button" aria-label="عرض موهبة ${escapeHtml(talent.title)}">
       <div class="talent-art ${palettes[index % palettes.length]}">${artwork}${sampleLabel}</div>
+      ${mediaStrip}
       <div class="talent-info"><div><h3>${escapeHtml(talent.title)}</h3><p>${escapeHtml(talent.description || "موهبة تستحق المشاهدة")}</p></div><span class="talent-icon">✦</span></div>
       <div class="talent-community-inline" aria-label="التفاعل والتعليقات"></div>
     </article>`;
@@ -94,19 +108,34 @@ async function loadPublishedTalents() {
   if (data) {
     const ids = data.map(item => item.id);
     if (ids.length) {
-      const { data: media, error: mediaError } = await client
+      let mediaResult = await client
         .from("talent_media")
-        .select("talent_id,file_url")
+        .select("talent_id,file_url,media_type,caption")
         .in("talent_id", ids)
-        .eq("media_type", "video")
+        .in("media_type", ["image", "video"])
         .eq("scan_status", "approved");
-      if (mediaError) console.error("Approved talent videos:", mediaError.message);
+      if (mediaResult.error && /caption|column/i.test(mediaResult.error.message || "")) {
+        mediaResult = await client
+          .from("talent_media")
+          .select("talent_id,file_url,media_type")
+          .in("talent_id", ids)
+          .in("media_type", ["image", "video"])
+          .eq("scan_status", "approved");
+      }
+      if (mediaResult.error) console.error("Approved talent media:", mediaResult.error.message);
       const byTalent = new Map();
-      (media || []).forEach(item => {
+      (mediaResult.data || []).forEach(item => {
         if (!byTalent.has(item.talent_id)) byTalent.set(item.talent_id, []);
-        byTalent.get(item.talent_id).push(item.file_url);
+        const isImage = item.media_type === "image";
+        const resolvedUrl = isImage
+          ? (item.file_url.startsWith("http") ? item.file_url : client.storage.from("talent-media").getPublicUrl(item.file_url).data.publicUrl)
+          : item.file_url;
+        byTalent.get(item.talent_id).push({ ...item, display_url: resolvedUrl });
       });
-      data.forEach(item => { item.approvedVideos = byTalent.get(item.id) || []; });
+      data.forEach(item => {
+        item.approvedMedia = byTalent.get(item.id) || [];
+        item.approvedVideos = item.approvedMedia.filter(media => media.media_type === "video").map(media => media.file_url);
+      });
     }
     publishedTalentRows = data;
     renderTalents(data);
@@ -532,12 +561,12 @@ function closeTalentDetail() {
 grid?.addEventListener("click", event => {
   const card = event.target.closest(".talent-card");
   if (!card) return;
-  if (event.target.closest(".talent-community-inline")) return;
+  if (event.target.closest(".talent-community-inline, .talent-media-strip")) return;
   showTalentDetail(card.dataset.talentId);
 });
 grid?.addEventListener("keydown", event => {
   if (event.key !== "Enter" && event.key !== " ") return;
-  if (event.target.closest(".talent-community-inline")) return;
+  if (event.target.closest(".talent-community-inline, .talent-media-strip")) return;
   const card = event.target.closest(".talent-card");
   if (card) {
     event.preventDefault();
@@ -675,6 +704,7 @@ createTalentButton?.addEventListener("click", async () => {
 
 const mediaTalentSelect = document.querySelector("#media-talent-select");
 const imageFileInput = document.querySelector("#talent-image-file");
+const imageCaptionInput = document.querySelector("#talent-image-caption");
 const uploadImageButton = document.querySelector("#upload-image-button");
 const mediaMessage = document.querySelector("#media-message");
 
@@ -782,6 +812,7 @@ uploadImageButton?.addEventListener("click", async () => {
       owner_id: userData.user.id,
       media_type: "image",
       file_url: uploadedPath,
+      caption: imageCaptionInput?.value.trim() || null,
       scan_status: "pending"
     });
     if (recordError) {
@@ -790,6 +821,7 @@ uploadImageButton?.addEventListener("click", async () => {
       throw recordError;
     }
     imageFileInput.value = "";
+    if (imageCaptionInput) imageCaptionInput.value = "";
     mediaMessage.textContent = "تم رفع الصورة بنجاح وإرسالها للمراجعة. لن تظهر للزوار إلا بعد اعتمادها.";
   } catch (error) {
     mediaMessage.textContent = error.message || "تعذر رفع الصورة. حاول مرة أخرى.";
@@ -861,6 +893,7 @@ syncPageView();
 
 
 const videoUrlInput = document.querySelector("#media-video-url");
+const videoCaptionInput = document.querySelector("#media-video-caption");
 const addVideoLinkButton = document.querySelector("#add-video-link-button");
 const videoMessage = document.querySelector("#video-message");
 
@@ -927,6 +960,7 @@ addVideoLinkButton?.addEventListener("click", async () => {
       owner_id: userData.user.id,
       media_type: "video",
       file_url: videoUrl,
+      caption: videoCaptionInput?.value.trim() || null,
       scan_status: "pending"
     });
     if (recordError) throw recordError;
