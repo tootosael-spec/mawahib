@@ -362,14 +362,16 @@ createTalentButton?.addEventListener("click", async () => {
       category_id: category.id,
       description,
       status: "pending"
-    }).select("id").single();
+    }).select("id,status").single();
     if (error) throw error;
     await loadOwnedTalents();
     if (mediaTalentSelect) mediaTalentSelect.value = createdTalent.id;
     document.querySelector("#talent-title").value = "";
     document.querySelector("#talent-description").value = "";
     categorySelect.value = "";
-    talentMessage.textContent = "تم حفظ ملف موهبتك وإرساله للمراجعة. سيظهر في المعرض بعد اعتماده.";
+    talentMessage.textContent = createdTalent.status === "published"
+      ? "اجتاز ملف موهبتك الفحص التلقائي ونُشر في المعرض ✓"
+      : "تم حفظ ملف موهبتك. رصد الفحص التلقائي مؤشرات تحتاج مراجعة إضافية قبل النشر.";
   } catch (error) {
     talentMessage.textContent = error.message || "تعذر حفظ الملف. حاول مرة أخرى.";
     talentMessage.classList.add("error");
