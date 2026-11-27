@@ -162,10 +162,10 @@ let publishedTalentRows = [];
 function showTalentDetail(talentId) {
   const talent = [...publishedTalentRows, ...sampleTalents].find(item => item.id === talentId);
   if (!talent || !talentDetail) return;
-  detailTitle.textContent = talent.title;
-  detailDescription.textContent = talent.description || "موهبة تستحق المشاهدة.";
+  if (detailTitle) detailTitle.textContent = talent.title;
+  if (detailDescription) detailDescription.textContent = talent.description || "موهبة تستحق المشاهدة.";
   if (detailContactTrigger) detailContactTrigger.hidden = Boolean(talent.isDemo || !talent.owner_id);
-  detailVideos.replaceChildren();
+  detailVideos?.replaceChildren();
   if (detailContact) {
     detailContact.replaceChildren();
     if (!talent.isDemo && talent.owner_id) {
@@ -251,7 +251,7 @@ function showTalentDetail(talentId) {
     const sample = document.createElement("p");
     sample.className = "detail-empty";
     sample.textContent = "خدمات نموذجية: " + talent.sampleServices + ". هذا الملف تجريبي للتوضيح فقط، وليس حساباً لشخص حقيقي.";
-    detailVideos.appendChild(sample);
+    detailVideos?.appendChild(sample);
   }
   const links = (talent.approvedVideos || []).filter(value => {
     try {
@@ -267,7 +267,7 @@ function showTalentDetail(talentId) {
     const note = document.createElement("p");
     note.className = "detail-empty";
     note.textContent = "لا توجد فيديوهات معتمدة لهذه الموهبة حتى الآن.";
-    detailVideos.appendChild(note);
+    detailVideos?.appendChild(note);
   } else {
     links.forEach((url, index) => {
       const link = document.createElement("a");
@@ -276,7 +276,7 @@ function showTalentDetail(talentId) {
       link.target = "_blank";
       link.rel = "noopener noreferrer";
       link.textContent = `مشاهدة الفيديو ${index + 1}`;
-      detailVideos.appendChild(link);
+      detailVideos?.appendChild(link);
     });
   }
   renderTalentCommunity(talent);
