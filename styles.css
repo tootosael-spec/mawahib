@@ -12,3 +12,7 @@
 .talent-form-wrap input,.talent-form-wrap select,.talent-form-wrap textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:12px;font:inherit;font-size:14px;background:#fff;color:var(--ink)}
 .talent-form-wrap textarea{resize:vertical;line-height:1.8}
 .talent-form-wrap .button{margin-top:16px}
+
+.media-upload-wrap{margin-top:18px}
+.media-upload-wrap input[type="file"]{padding:10px;font-size:12px}
+.media-upload-wrap .button{margin-top:14px}
