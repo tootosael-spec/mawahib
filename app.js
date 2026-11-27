@@ -318,48 +318,46 @@ async function renderTalentCommunity(talent, target = detailCommunity, inline = 
   };
 
   const setReaction = async (kind) => {
-    const button = kind === "like" ? likeButton : dislikeButton;
-    const oppositeTable = kind === "like" ? "talent_dislikes" : "talent_likes";
-    const table = kind === "like" ? "talent_likes" : "talent_dislikes";
-    button.disabled = true;
+    const wasLike = likeButton.classList.contains("selected");
+    const wasDislike = dislikeButton.classList.contains("selected");
+    const oldLikes = Number(likeCount.textContent || 0);
+    const oldDislikes = Number(dislikeCount.textContent || 0);
+    const nextReaction = (kind === "like" && wasLike) || (kind === "dislike" && wasDislike) ? null : kind;
+
+    // تحديث فوري للواجهة قبل انتظار قاعدة البيانات
+    likeButton.classList.toggle("selected", nextReaction === "like");
+    dislikeButton.classList.toggle("selected", nextReaction === "dislike");
+    likeCount.textContent = String(Math.max(0, oldLikes + (nextReaction === "like" ? 1 : 0) - (wasLike ? 1 : 0)));
+    dislikeCount.textContent = String(Math.max(0, oldDislikes + (nextReaction === "dislike" ? 1 : 0) - (wasDislike ? 1 : 0)));
     likeButton.disabled = true;
     dislikeButton.disabled = true;
+    status.textContent = "جارٍ حفظ رأيك…";
+
     try {
-      const [current, opposite] = await Promise.all([
-        client.from(table).select("id").eq("talent_id", talent.id).eq("visitor_id", visitorId).maybeSingle(),
-        client.from(oppositeTable).select("id").eq("talent_id", talent.id).eq("visitor_id", visitorId).maybeSingle()
-      ]);
-      if (current.error || opposite.error) throw current.error || opposite.error;
+      const { data, error } = await client.rpc("set_talent_reaction", {
+        p_talent_id: talent.id,
+        p_visitor_id: visitorId,
+        p_kind: kind
+      });
+      if (error) throw error;
 
-      if (opposite.data) {
-        const { error } = await client.from(oppositeTable).delete()
-          .eq("talent_id", talent.id).eq("visitor_id", visitorId);
-        if (error) throw error;
+      const result = Array.isArray(data) ? data[0] : data;
+      if (result && typeof result.likes !== "undefined") likeCount.textContent = String(result.likes);
+      if (result && typeof result.dislikes !== "undefined") dislikeCount.textContent = String(result.dislikes);
+      if (result && typeof result.my_reaction !== "undefined") {
+        likeButton.classList.toggle("selected", result.my_reaction === "like");
+        dislikeButton.classList.toggle("selected", result.my_reaction === "dislike");
       }
-
-      if (current.data && !opposite.data) {
-        const { error } = await client.from(table).delete()
-          .eq("talent_id", talent.id).eq("visitor_id", visitorId);
-        if (error) throw error;
-        status.textContent = "تم إلغاء تفاعلك.";
-      } else if (!current.data) {
-        const { error } = await client.from(table).insert({
-          talent_id: talent.id,
-          visitor_id: visitorId,
-          user_id: null
-        });
-        if (error) throw error;
-        status.textContent = "شكراً لمشاركتك رأيك.";
-      } else {
-        status.textContent = "تم تحديث تفاعلك.";
-      }
+      status.textContent = nextReaction ? "شكراً لمشاركة رأيك." : "تم إلغاء تفاعلك.";
       status.classList.remove("error");
-      await refreshReactions();
     } catch (error) {
+      likeButton.classList.toggle("selected", wasLike);
+      dislikeButton.classList.toggle("selected", wasDislike);
+      likeCount.textContent = String(oldLikes);
+      dislikeCount.textContent = String(oldDislikes);
       status.textContent = error.message || "تعذر تسجيل تفاعلك.";
       status.classList.add("error");
     } finally {
-      button.disabled = false;
       likeButton.disabled = false;
       dislikeButton.disabled = false;
     }
