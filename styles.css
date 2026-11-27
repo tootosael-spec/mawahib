@@ -57,3 +57,22 @@ body.account-page-mode .auth-section{
 body.detail-open{overflow:hidden}
 
 .sample-label{position:absolute;top:12px;right:12px;padding:6px 10px;border-radius:20px;background:#fff;color:#435b4e;font-size:10px;font-weight:700;box-shadow:0 3px 12px #142a2718}
+
+
+/* الرسائل والطلبات الداخلية */
+.detail-contact{margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
+.detail-contact h3{font-size:19px;margin:0 0 8px}
+.detail-contact textarea{display:block;width:100%;min-height:100px;margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit;resize:vertical}
+.detail-contact .button{margin-top:4px}
+.conversations-list{display:grid;gap:8px;margin-top:14px}
+.conversation-list-item{width:100%;text-align:right;border:1px solid var(--line);border-radius:10px;background:#fbfcf8;padding:13px;font:inherit;color:var(--ink);cursor:pointer}
+.conversation-list-item:hover{border-color:var(--green);background:#f3f7ef}
+.conversation-view{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.conversation-view h5{font-size:16px;margin:0 0 12px}
+.conversation-messages{display:flex;flex-direction:column;gap:9px;max-height:340px;overflow:auto;padding:8px;background:#f7f8f4;border-radius:10px}
+.conversation-bubble{max-width:88%;padding:10px 12px;border-radius:12px;background:#fff;align-self:flex-start;overflow-wrap:anywhere}
+.conversation-bubble.mine{align-self:flex-end;background:#e7efdf}
+.conversation-bubble p{margin:0;white-space:pre-wrap;line-height:1.7;font-size:13px}
+.conversation-bubble small{display:block;margin-top:5px;color:var(--muted);font-size:10px}
+.conversation-view textarea{width:100%;margin-top:10px;border:1px solid var(--line);border-radius:9px;padding:12px;font:inherit;resize:vertical}
+.conversation-view .button{margin-top:10px}
