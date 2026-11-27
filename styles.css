@@ -102,3 +102,49 @@ body.detail-open{overflow:hidden}
 .talent-card-actions button:hover,.talent-card-actions button:focus-visible{border-color:var(--green);background:#e7efdf;outline:none}
 .talent-card-actions button span{font-size:10px}
 @media(max-width:380px){.talent-card-actions{gap:3px;padding-left:6px;padding-right:6px}.talent-card-actions button{font-size:10px;padding:7px 1px}.talent-card-actions button span{font-size:9px}}
+
+
+/* تحسين عرض شرائح المواهب: بطاقات أوسع وأسهل للتصفح */
+.talent-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:24px;
+  align-items:stretch;
+}
+.talent-card{
+  border-radius:18px;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+}
+.talent-art{
+  height:250px;
+  font-size:92px;
+}
+.talent-info{
+  padding:20px;
+  min-height:88px;
+}
+.talent-info h3{font-size:18px}
+.talent-info p{font-size:13px}
+.talent-card-actions{
+  margin-top:auto;
+  padding:0 16px 16px;
+  gap:8px;
+}
+.talent-card-actions button{
+  padding:10px 5px;
+  font-size:12px;
+  border-radius:9px;
+}
+@media(max-width:900px){
+  .talent-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .talent-art{height:210px}
+}
+@media(max-width:600px){
+  .talent-grid{grid-template-columns:minmax(0,1fr);gap:18px}
+  .talent-art{height:235px;font-size:88px}
+  .talent-info{padding:18px;min-height:82px}
+  .talent-info h3{font-size:17px}
+  .talent-card-actions{padding:0 14px 14px;gap:7px}
+  .talent-card-actions button{font-size:12px;padding:10px 4px}
+}
