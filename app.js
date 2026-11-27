@@ -97,6 +97,28 @@ const client = window.supabase?.createClient(
   window.MAWAHIB_CONFIG.publishableKey
 );
 
+async function resolveTalentImageUrl(value) {
+  if (!value) return "";
+  let path = String(value).trim();
+  const bucket = "talent-media";
+  const marker = "/storage/v1/object/";
+  const markerIndex = path.indexOf(marker);
+  if (/^https?:\/\//i.test(path)) {
+    if (markerIndex === -1) return path;
+    const storagePath = path.slice(markerIndex + marker.length);
+    const bucketPrefix = storagePath.replace(/^(public\/|sign\/|authenticated\/)?/, "");
+    const prefix = bucket + "/";
+    if (!bucketPrefix.startsWith(prefix)) return path;
+    path = decodeURIComponent(bucketPrefix.slice(prefix.length).split("?")[0]);
+  }
+  const { data, error } = await client.storage.from(bucket).createSignedUrl(path, 3600);
+  if (error || !data?.signedUrl) {
+    console.warn("تعذر إنشاء رابط صورة الموهبة:", error?.message || "No signed URL");
+    return "";
+  }
+  return data.signedUrl;
+}
+
 async function loadPublishedTalents() {
   if (!client || !grid) return;
   const { data, error } = await client
@@ -127,23 +149,27 @@ async function loadPublishedTalents() {
       }
       if (mediaResult.error) console.error("Approved talent media:", mediaResult.error.message);
       const byTalent = new Map();
-      (mediaResult.data || []).forEach(item => {
+      for (const item of (mediaResult.data || [])) {
         if (!byTalent.has(item.talent_id)) byTalent.set(item.talent_id, []);
-        const isImage = item.media_type === "image";
-        const resolvedUrl = isImage
-          ? (item.file_url.startsWith("http") ? item.file_url : client.storage.from("talent-media").getPublicUrl(item.file_url).data.publicUrl)
+        const resolvedUrl = item.media_type === "image"
+          ? await resolveTalentImageUrl(item.file_url)
           : item.file_url;
         byTalent.get(item.talent_id).push({ ...item, display_url: resolvedUrl });
-      });
-      data.forEach(item => {
+      }
+      for (const item of data) {
         item.approvedMedia = byTalent.get(item.id) || [];
-        // إذا لم يحدد صاحب الموهبة صورة غلاف مستقلة، استخدم أول صورة معتمدة في الخانة الوردية.
+        // روابط الغلاف القديمة قد تكون روابط Storage عامة بينما الحاوية خاصة؛ حوّلها إلى رابط مؤقت صالح.
+        if (item.cover_url) {
+          const resolvedCover = await resolveTalentImageUrl(item.cover_url);
+          if (resolvedCover) item.cover_url = resolvedCover;
+        }
+        // إذا لم تتوفر صورة غلاف صالحة، استخدم أول صورة معتمدة قابلة للعرض في الخانة الوردية.
         if (!item.cover_url) {
           const firstApprovedImage = item.approvedMedia.find(media => media.media_type === "image" && media.display_url);
           if (firstApprovedImage) item.cover_url = firstApprovedImage.display_url;
         }
         item.approvedVideos = item.approvedMedia.filter(media => media.media_type === "video").map(media => media.file_url);
-      });
+      }
     }
     publishedTalentRows = data;
     renderTalents(data);
