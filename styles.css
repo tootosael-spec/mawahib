@@ -16,3 +16,11 @@
 .media-upload-wrap{margin-top:18px}
 .media-upload-wrap input[type="file"]{padding:10px;font-size:12px}
 .media-upload-wrap .button{margin-top:14px}
+
+.talent-list-wrap{margin:22px 0;padding:22px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.talent-list-wrap h4{font-size:19px;margin:0 0 6px}
+.my-talents-list{display:grid;gap:10px}
+.my-talent-card{padding:13px;border:1px solid var(--line);border-radius:10px;background:#fbfcf8}
+.my-talent-card h5{font-size:15px;margin:0 0 5px;color:var(--ink)}
+.my-talent-card p{font-size:12px;margin:0 0 8px;color:var(--muted)}
+.my-talent-status{display:inline-block;font-size:11px;padding:5px 9px;border-radius:20px;background:#f1ead7;color:#775c24}
