@@ -31,7 +31,7 @@ function renderTalents(rows) {
     const artwork = talent.cover_url
       ? `<img src="${escapeHtml(talent.cover_url)}" alt="" loading="lazy">`
       : `<span>${symbols[index % symbols.length]}</span><small>${escapeHtml(category)}</small>`;
-    return `<article class="talent-card" data-category="${escapeHtml(shortCategory)}" data-name="${escapeHtml(talent.title)}">
+    return `<article class="talent-card" data-talent-id="${escapeHtml(talent.id)}" data-category="${escapeHtml(shortCategory)}" data-name="${escapeHtml(talent.title)}" tabindex="0" role="button" aria-label="عرض موهبة ${escapeHtml(talent.title)}">
       <div class="talent-art ${palettes[index % palettes.length]}">${artwork}</div>
       <div class="talent-info"><div><h3>${escapeHtml(talent.title)}</h3><p>${escapeHtml(talent.description || "موهبة تستحق المشاهدة")}</p></div><span class="talent-icon">✦</span></div>
     </article>`;
@@ -75,8 +75,95 @@ async function loadPublishedTalents() {
     console.error("Mawahib database:", error.message);
     return;
   }
-  if (data) renderTalents(data);
+  if (data) {
+    const ids = data.map(item => item.id);
+    if (ids.length) {
+      const { data: media, error: mediaError } = await client
+        .from("talent_media")
+        .select("talent_id,file_url")
+        .in("talent_id", ids)
+        .eq("media_type", "video")
+        .eq("scan_status", "approved");
+      if (mediaError) console.error("Approved talent videos:", mediaError.message);
+      const byTalent = new Map();
+      (media || []).forEach(item => {
+        if (!byTalent.has(item.talent_id)) byTalent.set(item.talent_id, []);
+        byTalent.get(item.talent_id).push(item.file_url);
+      });
+      data.forEach(item => { item.approvedVideos = byTalent.get(item.id) || []; });
+    }
+    publishedTalentRows = data;
+    renderTalents(data);
+  }
 }
+
+
+const talentDetail = document.querySelector("#talent-detail");
+const detailTitle = document.querySelector("#detail-title");
+const detailDescription = document.querySelector("#detail-description");
+const detailVideos = document.querySelector("#detail-videos");
+let publishedTalentRows = [];
+
+function showTalentDetail(talentId) {
+  const talent = publishedTalentRows.find(item => item.id === talentId);
+  if (!talent || !talentDetail) return;
+  detailTitle.textContent = talent.title;
+  detailDescription.textContent = talent.description || "موهبة تستحق المشاهدة.";
+  detailVideos.replaceChildren();
+  const links = (talent.approvedVideos || []).filter(value => {
+    try {
+      const url = new URL(value);
+      const host = url.hostname.toLowerCase().replace(/^www\./, "");
+      return url.protocol === "https:" && [
+        "youtube.com","m.youtube.com","youtu.be","tiktok.com","vm.tiktok.com",
+        "vt.tiktok.com","instagram.com","facebook.com","fb.watch"
+      ].includes(host);
+    } catch { return false; }
+  });
+  if (!links.length) {
+    const note = document.createElement("p");
+    note.className = "detail-empty";
+    note.textContent = "لا توجد فيديوهات معتمدة لهذه الموهبة حتى الآن.";
+    detailVideos.appendChild(note);
+  } else {
+    links.forEach((url, index) => {
+      const link = document.createElement("a");
+      link.className = "button";
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = `مشاهدة الفيديو ${index + 1}`;
+      detailVideos.appendChild(link);
+    });
+  }
+  talentDetail.hidden = false;
+  document.body.classList.add("detail-open");
+}
+
+function closeTalentDetail() {
+  if (!talentDetail) return;
+  talentDetail.hidden = true;
+  document.body.classList.remove("detail-open");
+}
+
+grid?.addEventListener("click", event => {
+  const card = event.target.closest(".talent-card");
+  if (card) showTalentDetail(card.dataset.talentId);
+});
+grid?.addEventListener("keydown", event => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const card = event.target.closest(".talent-card");
+  if (card) {
+    event.preventDefault();
+    showTalentDetail(card.dataset.talentId);
+  }
+});
+talentDetail?.querySelectorAll("[data-close-detail]").forEach(button =>
+  button.addEventListener("click", closeTalentDetail)
+);
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeTalentDetail();
+});
 
 const message = document.querySelector("#auth-message");
 const formWrap = document.querySelector("#auth-form-wrap");
